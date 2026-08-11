@@ -1,0 +1,34 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Environment & Secret files (Never commit API keys)
+.env
+.env.local
+.env.*
+!.env.example
+
+# IDE & Editor configuration
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS & Log files
+.DS_Store
+Thumbs.db
+*.log
+
+# Temporary / Scratch files
+tmp_*
+scratch/

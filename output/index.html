@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boutique Hotel Service Analytics Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --bg-body: #0b0f19;
+            --bg-card: rgba(22, 30, 49, 0.75);
+            --bg-card-hover: rgba(30, 41, 67, 0.85);
+            --border-card: rgba(255, 255, 255, 0.08);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-indigo: #6366f1;
+            --accent-purple: #8b5cf6;
+            --accent-rose: #f43f5e;
+            --accent-emerald: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-cyan: #06b6d4;
+            --radius-lg: 16px;
+            --radius-md: 10px;
+            --shadow-glow: 0 0 25px rgba(99, 102, 241, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            background-image: 
+                radial-gradient(at 10% 10%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
+                radial-gradient(at 90% 90%, rgba(244, 63, 94, 0.08) 0px, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 2rem 1.5rem;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-card);
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header-title h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffffff 0%, #a5b4fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .header-title p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+
+        .badge-model {
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            color: #c7d2fe;
+            padding: 0.35rem 0.85rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .btn-action {
+            background: linear-gradient(135deg, var(--accent-indigo), var(--accent-purple));
+            color: white;
+            border: none;
+            padding: 0.65rem 1.25rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+        }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+        }
+
+        /* KPI Cards Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .kpi-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-card);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-card:hover {
+            background: var(--bg-card-hover);
+            transform: translateY(-3px);
+            border-color: rgba(255, 255, 255, 0.15);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--accent-indigo);
+        }
+
+        .kpi-card.rose::before { background: var(--accent-rose); }
+        .kpi-card.amber::before { background: var(--accent-amber); }
+        .kpi-card.emerald::before { background: var(--accent-emerald); }
+
+        .kpi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 0.75rem;
+        }
+
+        .kpi-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .kpi-value {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.25rem;
+            font-weight: 800;
+            color: #ffffff;
+            line-height: 1.1;
+        }
+
+        .kpi-subtext {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+
+        /* Executive Banner */
+        .exec-banner {
+            background: linear-gradient(135deg, rgba(30, 41, 67, 0.9), rgba(15, 23, 42, 0.9));
+            border: 1px solid rgba(99, 102, 241, 0.25);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem 1.75rem;
+            margin-bottom: 2rem;
+            position: relative;
+            backdrop-filter: blur(16px);
+        }
+
+        .exec-banner h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.15rem;
+            color: #c7d2fe;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .exec-banner p {
+            color: #e2e8f0;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* Charts Layout */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 992px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-card);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-card h3 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 1.25rem;
+            color: #f1f5f9;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            flex: 1;
+            min-height: 340px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding-bottom: 0.5rem;
+        }
+
+        /* Table Section */
+        .section-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-card);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .section-header h3 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #f1f5f9;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Filter Controls */
+        .controls-row {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-box {
+            position: relative;
+            min-width: 240px;
+        }
+
+        .search-box input {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border-card);
+            padding: 0.55rem 1rem 0.55rem 2.4rem;
+            border-radius: var(--radius-md);
+            color: white;
+            font-size: 0.85rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-box input:focus {
+            border-color: var(--accent-indigo);
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 0.85rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .filter-select {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border-card);
+            padding: 0.55rem 1rem;
+            border-radius: var(--radius-md);
+            color: white;
+            font-size: 0.85rem;
+            outline: none;
+            cursor: pointer;
+        }
+
+        /* Custom Table */
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.875rem;
+        }
+
+        th {
+            background: rgba(15, 23, 42, 0.9);
+            color: var(--text-muted);
+            font-weight: 600;
+            padding: 0.85rem 1rem;
+            border-bottom: 1px solid var(--border-card);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            color: #cbd5e1;
+            vertical-align: top;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.25rem 0.65rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-high {
+            background: rgba(244, 63, 94, 0.15);
+            color: #fca5a5;
+            border: 1px solid rgba(244, 63, 94, 0.3);
+        }
+
+        .badge-medium {
+            background: rgba(245, 158, 11, 0.15);
+            color: #fde047;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .badge-low {
+            background: rgba(16, 185, 129, 0.15);
+            color: #6ee7b7;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .badge-cat {
+            background: rgba(99, 102, 241, 0.12);
+            color: #a5b4fc;
+            border: 1px solid rgba(99, 102, 241, 0.25);
+        }
+
+        .badge-pos { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+        .badge-neu { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+        .badge-neg { background: rgba(244, 63, 94, 0.15); color: #f87171; }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.25rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-card);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .page-btn {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border-card);
+            color: white;
+            padding: 0.4rem 0.85rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .page-btn:not(:disabled):hover {
+            background: var(--accent-indigo);
+            border-color: var(--accent-indigo);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Header -->
+    <header>
+        <div class="header-title">
+            <h1><i class="fa-solid fa-hotel" style="color: var(--accent-indigo);"></i> Boutique Hotel Service Analysis</h1>
+            <p>Báo cáo Chiến lược AI Analytics & Khảo sát Phản hồi Khách hàng</p>
+        </div>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <span class="badge-model"><i class="fa-solid fa-microchip"></i> Model: Gemini 3.1 Flash Lite</span>
+            <button class="btn-action" onclick="window.print()"><i class="fa-solid fa-print"></i> Xuất Báo Cáo</button>
+        </div>
+    </header>
+
+    <!-- Executive Summary Banner -->
+    <div class="exec-banner">
+        <h2><i class="fa-solid fa-lightbulb" style="color: var(--accent-amber);"></i> 📌 Đánh Giá Tổng Quan Từ AI Agent</h2>
+        <p>Báo cáo phân tích 235 đánh giá từ khách hàng cho thấy có 68 phản hồi mang tính khiếu nại/góp ý. Đối với định vị Khách sạn Boutique, vấn đề ảnh hưởng trực tiếp đến uy tín thương hiệu tập trung ở các nhóm: Room_Amenities, Staff_Service, Pricing_and_Fees. Ban quản lý cần ưu tiên xử lý ngay các khiếu nại về minh bạch chi phí dịch vụ và quy trình vệ sinh phòng ở trong SLA 1-3 ngày.</p>
+    </div>
+
+    <!-- KPI Cards Grid -->
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-header">
+                <span>TỔNG SỐ ĐÁNH GIÁ</span>
+                <div class="kpi-icon" style="color: var(--accent-indigo);"><i class="fa-solid fa-comments"></i></div>
+            </div>
+            <div class="kpi-value">235</div>
+            <div class="kpi-subtext">Đã thu thập từ file dữ liệu review.csv</div>
+        </div>
+
+        <div class="kpi-card rose">
+            <div class="kpi-header">
+                <span>TỔNG SỐ KHIẾU NẠI (PAIN POINTS)</span>
+                <div class="kpi-icon" style="color: var(--accent-rose);"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            </div>
+            <div class="kpi-value">68</div>
+            <div class="kpi-subtext">Chiếm 28.9% tổng số phản hồi khách hàng</div>
+        </div>
+
+        <div class="kpi-card amber">
+            <div class="kpi-header">
+                <span>TỶ LỆ TIÊU CỰC (NEGATIVE)</span>
+                <div class="kpi-icon" style="color: var(--accent-amber);"><i class="fa-solid fa-face-frown"></i></div>
+            </div>
+            <div class="kpi-value">52</div>
+            <div class="kpi-subtext">🟢 159 Tích cực | 🟡 24 Trung tính</div>
+        </div>
+
+        <div class="kpi-card emerald">
+            <div class="kpi-header">
+                <span>HÀNH ĐỘNG ƯU TIÊN CAO (SLA &lt; 3D)</span>
+                <div class="kpi-icon" style="color: var(--accent-emerald);"><i class="fa-solid fa-bolt"></i></div>
+            </div>
+            <div class="kpi-value">2</div>
+            <div class="kpi-subtext">Các vấn đề Deal-breaker cần khắc phục ngay</div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="charts-grid">
+        <!-- Donut Chart: Sentiment -->
+        <div class="chart-card">
+            <h3><i class="fa-solid fa-chart-pie" style="color: var(--accent-indigo);"></i> Phân Phối Cảm Xúc Khách Hàng</h3>
+            <div class="chart-wrapper">
+                <canvas id="sentimentChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Bar Chart: Category Breakdown -->
+        <div class="chart-card">
+            <h3><i class="fa-solid fa-chart-simple" style="color: var(--accent-purple);"></i> Phân Bố Khiếu Nại Theo Nhóm Dịch Vụ Boutique</h3>
+            <div class="chart-wrapper">
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Plan SLA Section -->
+    <div class="section-card">
+        <div class="section-header">
+            <h3><i class="fa-solid fa-list-check" style="color: var(--accent-emerald);"></i> 🛠️ Kế Hoạch Hành Động Khắc Phục Dịch Vụ (SLA Matrix)</h3>
+        </div>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Mức Ưu Tiên</th>
+                        <th>Bộ Phận</th>
+                        <th>Vấn Đề Ghi Nhận</th>
+                        <th>Lý Do Phân Loại</th>
+                        <th>Giải Pháp Đề Xuất</th>
+                        <th>SLA Khắc Phục</th>
+                    </tr>
+                </thead>
+                <tbody id="actionTableBody">
+                    <!-- Dynamic Rows -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Live Data Explorer -->
+    <div class="section-card">
+        <div class="section-header">
+            <h3><i class="fa-solid fa-database" style="color: var(--accent-cyan);"></i> 🔍 Tra Cứu Dữ Liệu Review Chi Tiết (Data Explorer)</h3>
+            <div class="controls-row">
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="searchInput" placeholder="Tìm kiếm từ khóa review..." oninput="filterReviews()">
+                </div>
+                <select class="filter-select" id="sentimentFilter" onchange="filterReviews()">
+                    <option value="ALL">Tất cả cảm xúc</option>
+                    <option value="Negative">Negative (Tiêu cực)</option>
+                    <option value="Neutral">Neutral (Trung tính)</option>
+                    <option value="Positive">Positive (Tích cực)</option>
+                </select>
+                <select class="filter-select" id="categoryFilter" onchange="filterReviews()">
+                    <option value="ALL">Tất cả danh mục</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Cảm Xúc</th>
+                        <th>Khiếu Nại?</th>
+                        <th>Phân Loại Nhóm</th>
+                        <th>Nội Dung Đánh Giá (Review Text)</th>
+                        <th>Tóm Tắt AI (Summary)</th>
+                    </tr>
+                </thead>
+                <tbody id="reviewsTableBody">
+                    <!-- Dynamic Reviews -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination">
+            <span id="pageInfo">Đang hiển thị...</span>
+            <div>
+                <button class="page-btn" id="prevBtn" onclick="changePage(-1)"><i class="fa-solid fa-chevron-left"></i> Trước</button>
+                <button class="page-btn" id="nextBtn" onclick="changePage(1)">Sau <i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Embedded Data
+    const REPORT_DATA = {"hotel_name": "Boutique Hotel Service Analysis", "total_reviews_analyzed": 235, "overall_sentiment_breakdown": {"Positive": 159, "Neutral": 24, "Negative": 52}, "total_pain_points": 68, "executive_summary": "Báo cáo phân tích 235 đánh giá từ khách hàng cho thấy có 68 phản hồi mang tính khiếu nại/góp ý. Đối với định vị Khách sạn Boutique, vấn đề ảnh hưởng trực tiếp đến uy tín thương hiệu tập trung ở các nhóm: Room_Amenities, Staff_Service, Pricing_and_Fees. Ban quản lý cần ưu tiên xử lý ngay các khiếu nại về minh bạch chi phí dịch vụ và quy trình vệ sinh phòng ở trong SLA 1-3 ngày.", "category_insights": [{"category": "Room_Amenities", "complaint_count": 14, "percentage": 20.6, "key_issues": ["Phòng cũ kỹ, không giống hình ảnh quảng cáo.", "Vị trí tốt và sạch sẽ nhưng thiếu các tiện ích như nhà hàng, quán cà phê.", "Tòa nhà đã quá cũ.", "Giá hợp lý nhưng dịch vụ giặt ủi không đúng như quảng cáo.", "Great room and service, but the TV lacks smart features like YouTube or Netflix."], "root_cause": "Thiết bị hạ tầng (điều hòa, nước nóng, wifi) xuống cấp chưa bảo trì kịp thời."}, {"category": "Staff_Service", "complaint_count": 11, "percentage": 16.2, "key_issues": ["Thiếu lễ tân phục vụ khách.", "Nhân viên lễ tân làm lộ thông tin cá nhân của khách hàng.", "Inconsistent service quality; staff lost items during the second stay.", "Không thể liên lạc với khách sạn khi đến nhận phòng.", "Staff failed to honor a promise regarding shower access, and the room was unclean with mold in the bathroom."], "root_cause": "Quy trình chăm sóc chưa ấm cúng & thiếu giải quyết linh hoạt khi sự cố xảy ra."}, {"category": "Pricing_and_Fees", "complaint_count": 10, "percentage": 14.7, "key_issues": ["Phí gửi xe quá cao và quy định đỗ xe gây bất tiện cho shipper.", "Customer was overcharged for parking compared to the listed price without clear explanation.", "Lack of transparency regarding mandatory security deposit fees.", "Giá cao so với chất lượng, cơ sở vật chất nguy hiểm.", "Great location with many dining options, but drinks are expensive."], "root_cause": "Thiếu minh bạch trong phụ phí điện/nước và thủ tục hóa đơn tài chính."}, {"category": "Cleanliness", "complaint_count": 9, "percentage": 13.2, "key_issues": ["Phòng cũ và rất bẩn, không đáng tiền.", "Vị trí tốt và sạch sẽ nhưng nội thất không được dọn dẹp trong suốt thời gian lưu trú.", "The room cleaning was not thorough.", "Bathroom was full of mold on the ceiling and around the sink and shower.", "Messy room, dirty bathroom, unfriendly service, and lack of parking."], "root_cause": "Quy trình kiểm tra dọn phòng chưa nghiêm ngặt, ảnh hưởng tiêu chuẩn Boutique."}, {"category": "Others", "complaint_count": 9, "percentage": 13.2, "key_issues": ["Khách hàng không hài lòng về việc sử dụng hình ảnh cá nhân.", "Phòng thực tế không giống quảng cáo, điều kiện tồi tệ.", "Đánh giá thấp.", "The place feels geared towards long-term guests; cleanliness could be improved, but the pets are a highlight.", "Presence of many cats in the lobby may cause issues for guests with allergies."], "root_cause": "Quy trình đặt phòng và xuất hóa đơn giao dịch gặp trục trặc."}, {"category": "Location_and_Access", "complaint_count": 8, "percentage": 11.8, "key_issues": ["Vị trí khó tiếp cận cho người đi bộ, cần phương tiện di chuyển.", "Tiện nghi ổn nhưng vị trí xa các trung tâm thương mại.", "Clean and spacious rooms with good views, but slightly far from the city center.", "Good value for money and modern design, but location is not central.", "Good service but poor location with safety concerns."], "root_cause": "Hướng dẫn vị trí và đường đi/chỗ đỗ xe chưa chi tiết cho khách."}, {"category": "F_and_B", "complaint_count": 3, "percentage": 4.4, "key_issues": ["Good taste and service, but the portion sizes are too small for the price.", "Staff were pleasant, but the breakfast service was disappointing due to insufficient orange juice.", "Room conditions need improvement and the breakfast was very disappointing and simple."], "root_cause": "Chất lượng dịch vụ ăn uống/bữa sáng chưa đa dạng."}, {"category": "Boutique_Experience", "complaint_count": 2, "percentage": 2.9, "key_issues": ["Complaints about discriminatory treatment and lack of respect towards male guests.", "Misleading advertising regarding star rating and poor facility quality."], "root_cause": "Thiết kế không gian hoặc trải nghiệm phòng ở chưa đúng kỳ vọng quảng cáo."}, {"category": "Noise_and_Quietness", "complaint_count": 2, "percentage": 2.9, "key_issues": ["Severe construction noise starting early in the morning.", "The room was small for the price, breakfast was limited, and poor soundproofing caused sleep disturbance."], "root_cause": "Độ cách âm chưa đạt chuẩn làm mất đi sự riêng tư yên tĩnh của khách sạn boutique."}], "action_items": [{"priority": "High", "priority_rationale": "Trực tiếp gây tranh chấp pháp lý/tài chính và tạo bài đánh giá 1 sao (phạt điện nước 5k/số, không xuất hóa đơn). Lỗi Deal-breaker với khách sạn.", "department": "Ban Quản Lý & Kế Toán", "issue": "Thu phụ phí điện/nước bất hợp lý, thiếu minh bạch hóa đơn thanh toán", "action_plan": "Ban hành ngay bảng giá niêm yết chuẩn; rà soát lại hợp đồng thuê; đào tạo nhân viên cung cấp hóa đơn/biên nhận rõ ràng cho khách.", "timeline": "Ngay lập tức (24h - 3 ngày)"}, {"priority": "High", "priority_rationale": "Sạch sẽ là yêu cầu tối quan trọng của mô hình Boutique Hotel. Phòng dơ hoặc có mùi sẽ ngay lập tức làm mất hình ảnh thương hiệu cao cấp.", "department": "Bộ Phận Buồng Phòng (Housekeeping)", "issue": "Vệ sinh phòng, phòng tắm hoặc mùi hôi chưa đạt tiêu chuẩn boutique", "action_plan": "Thiết lập quy trình kiểm tra vệ sinh 2 lớp (Nhân viên dọn + Trưởng nhóm duyệt) trước khi giao phòng. Đặt tinh dầu/khử mùi tự nhiên.", "timeline": "Trong vòng 3 ngày"}, {"priority": "Medium", "priority_rationale": "Hạ tầng chập chờn (máy lạnh yếu, wifi chậm) giảm điểm rating từ 5* xuống 3-4*. Cần bảo trì nhưng có thể thu xếp trong 1-2 tuần.", "department": "Bộ Phận Bảo Trì (Maintenance)", "issue": "Trang thiết bị phòng ở (máy lạnh, nước nóng, wifi) hoạt động không ổn định", "action_plan": "Kiểm tra tổng thể toàn bộ hệ thống điện lạnh và internet; thay thế các thiết bị cũ hỏng.", "timeline": "1 - 2 tuần"}, {"priority": "Medium", "priority_rationale": "Boutique Hotel sống bằng sự tận tụy và ấm cúng của nhân viên. Thái độ thiếu linh hoạt cần được khắc phục qua đào tạo nội bộ.", "department": "Bộ Phận Lễ Tân & Nhân Sự", "issue": "Thái độ giao tiếp chưa ấm cúng, xử lý sự cố chưa linh hoạt chuẩn boutique", "action_plan": "Đào tạo chuẩn phong cách dịch vụ Boutique (Personalized Service); ban hành quy trình đền bù sự cố nhanh (khách không phải chờ đợi).", "timeline": "1 - 2 tuần"}, {"priority": "Low", "priority_rationale": "Ảnh hưởng đến trải nghiệm riêng tư nhưng phụ thuộc vào kết cấu hạ tầng, cần thời gian thi công bổ sung vật liệu cách âm.", "department": "Bộ Phận Bảo Trì & Thi Công", "issue": "Tiếng ồn đêm khuya và độ cách âm giữa các phòng chưa hoàn hảo", "action_plan": "Lắp ron cao su cách âm chân cửa; nhắc nhở khách giữ yên tĩnh sau 22h; trang bị nút tai cách âm tặng khách.", "timeline": "2 - 4 tuần"}]};
+    const REVIEWS_DATA = [{"id": 1, "reviewer_name": "Guest #1", "rating": 5, "review_text": "Vị trí có vẻ tuyệt vời, nhưng không thuận tiện cho việc đi bộ; bạn sẽ cần phải có người đưa đón hoặc phương tiện cá nhân trừ khi bạn cảm thấy thoải mái khi đi bộ băng qua con đường gần như là đường cao tốc để đến khu mua sắm. Phòng chúng …", "sentiment": "Negative", "pain_point_flag": true, "category": "Location_and_Access", "summary": "Vị trí khó tiếp cận cho người đi bộ, cần phương tiện di chuyển."}, {"id": 2, "reviewer_name": "Guest #2", "rating": 5, "review_text": "Tòa nhà dễ tiếp cận nhưng có vẻ thiếu lễ tân sảnh để phục vụ tiện ích cho khách thăm", "sentiment": "Negative", "pain_point_flag": true, "category": "Staff_Service", "summary": "Thiếu lễ tân phục vụ khách."}, {"id": 3, "reviewer_name": "Guest #3", "rating": 5, "review_text": "Tôi đặt phòng qua Airbnb, nhưng\n\nđó là một chỗ ở kiểu cũ, trông cổ hơn nhiều so với ảnh. …", "sentiment": "Negative", "pain_point_flag": true, "category": "Room_Amenities", "summary": "Phòng cũ kỹ, không giống hình ảnh quảng cáo."}, {"id": 4, "reviewer_name": "Guest #4", "rating": 5, "review_text": "Phòng của chúng tôi cũ kỹ và rất bẩn. May mắn là bể bơi khá ổn, nếu không thì tôi đã không quay lại đây nữa. Đừng phí tiền ở đây.", "sentiment": "Negative", "pain_point_flag": true, "category": "Cleanliness", "summary": "Phòng cũ và rất bẩn, không đáng tiền."}, {"id": 5, "reviewer_name": "Guest #5", "rating": 5, "review_text": "Về mặt tích cực, căn hộ nằm ở vị trí thuận tiện để đi đến trung tâm thành phố. Ngoại thất, an ninh và sự sạch sẽ (các tiện ích chung như hành lang và sảnh) được bảo trì tốt. Về mặt tiêu cực, thiếu các tiện nghi như nhà hàng và quán cà phê …", "sentiment": "Neutral", "pain_point_flag": true, "category": "Room_Amenities", "summary": "Vị trí tốt và sạch sẽ nhưng thiếu các tiện ích như nhà hàng, quán cà phê."}, {"id": 6, "reviewer_name": "Guest #6", "rating": 5, "review_text": "😶‍🌫️ …", "sentiment": "Neutral", "pain_point_flag": false, "category": "None", "summary": "Không có nội dung cụ thể."}, {"id": 7, "reviewer_name": "Guest #7", "rating": 5, "review_text": "Tòa nhà rất cũ", "sentiment": "Negative", "pain_point_flag": true, "category": "Room_Amenities", "summary": "Tòa nhà đã quá cũ."}, {"id": 8, "reviewer_name": "Guest #8", "rating": 5, "review_text": "Chung cư tuy cũ nhưng được bảo dưỡng khá sạch sẽ, mang phong cách 1 khách sạn cổ điển Châu Âu, có cảm giác đang đi ở khách sạn nhiều hơn cảm giác 1 căn hộ gia đình", "sentiment": "Positive", "pain_point_flag": false, "category": "Boutique_Experience", "summary": "Chung cư cũ nhưng sạch sẽ, mang phong cách khách sạn cổ điển."}, {"id": 9, "reviewer_name": "Guest #9", "rating": 5, "review_text": "tiện nghi khá ổn, ở thoải mái nhưng hơi phiền vì khá xa các trung tâm thương mại, dịch vụ", "sentiment": "Neutral", "pain_point_flag": true, "category": "Location_and_Access", "summary": "Tiện nghi ổn nhưng vị trí xa các trung tâm thương mại."}, {"id": 10, "reviewer_name": "Guest #10", "rating": 5, "review_text": "Chung cư xây lâu, khá cao cấp", "sentiment": "Positive", "pain_point_flag": false, "category": "Others", "summary": "Chung cư xây lâu nhưng vẫn giữ được sự cao cấp."}, {"id": 11, "reviewer_name": "Guest #11", "rating": 5, "review_text": "Vị trí thuận lợi, kiến trúc đẹp", "sentiment": "Positive", "pain_point_flag": false, "category": "Location_and_Access", "summary": "Vị trí thuận lợi và kiến trúc đẹp."}, {"id": 12, "reviewer_name": "Guest #12", "rating": 5, "review_text": "Tôi không thích Đăng ảnh của tôi", "sentiment": "Negative", "pain_point_flag": true, "category": "Others", "summary": "Khách hàng không hài lòng về việc sử dụng hình ảnh cá nhân."}, {"id": 13, "reviewer_name": "Guest #13", "rating": 5, "review_text": "Vị trí chỗ ở khá tốt. Trung tâm Quận 1 và các địa danh cách đó khoảng 10 phút. Tòa nhà hơi cũ, nhưng bên trong sạch sẽ. Tôi có thể liên hệ với quản lý ngay lập tức. Có một cửa hàng tiện lợi ở tầng một. Tôi dự định sẽ ở lại đây lần nữa vào lần sau. Nhược điểm duy nhất là nội thất không được dọn dẹp trong suốt 3 đêm tôi ở đó.", "sentiment": "Neutral", "pain_point_flag": true, "category": "Cleanliness", "summary": "Vị trí tốt và sạch sẽ nhưng nội thất không được dọn dẹp trong suốt thời gian lưu trú."}, {"id": 14, "reviewer_name": "Guest #14", "rating": 5, "review_text": "Vị trí an toàn và giá cả hợp lý. Trước khi đặt phòng, tôi thấy các đánh giá trực tuyến đề cập đến dịch vụ giặt ủi miễn phí, nhưng dịch vụ này không có sẵn trong phòng, và bạn sẽ không tìm thấy nó ngoài giờ sáng sớm. Tuy nhiên, có một cửa …", "sentiment": "Neutral", "pain_point_flag": true, "category": "Room_Amenities", "summary": "Giá hợp lý nhưng dịch vụ giặt ủi không đúng như quảng cáo."}, {"id": 15, "reviewer_name": "Guest #15", "rating": 5, "review_text": "Nhìn chung, tôi khá hài lòng khi ở khách sạn này. Nó đáp ứng đúng những gì bạn cần. Như đã nêu trong mô tả, phòng không có cửa sổ và không quá rộng rãi, nhưng rất sạch sẽ, đầy đủ tiện nghi, được thiết kế chu đáo và trang nhã. Tôi chắc chắn sẽ quay lại đây lần nữa.", "sentiment": "Positive", "pain_point_flag": false, "category": "Room_Amenities", "summary": "Phòng sạch sẽ, tiện nghi và thiết kế đẹp dù không có cửa sổ."}, {"id": 16, "reviewer_name": "Guest #16", "rating": 5, "review_text": "Tòa nhà chung cư cũ, hơi xa trung tâm thành phố một chút, nhưng gần Landmark 81 với khu mua sắm tuyệt vời và tòa tháp Sky Tower. Công viên Vincom là nơi thư giãn tuyệt vời. Tất cả nhân viên tại Manor 2 đều rất nhiệt tình giúp đỡ. Rất sạch sẽ, hồ bơi tuy hơi cũ nhưng được bảo trì tốt và sạch sẽ.", "sentiment": "Positive", "pain_point_flag": false, "category": "Staff_Service", "summary": "Nhân viên nhiệt tình, khách sạn sạch sẽ và gần các khu tiện ích."}, {"id": 17, "reviewer_name": "Guest #17", "rating": 5, "review_text": "Căn hộ hơi cũ nhưng vẫn khá tốt. Tầng 25 có hồ bơi khá đẹp và tầm nhìn tuyệt vời. Mặc dù thiết kế có vẻ hơi lỗi thời, nhưng đây vẫn là một nơi ở không tồi. Có một vài cửa hàng tiện lợi gần đó.", "sentiment": "Neutral", "pain_point_flag": false, "category": "Room_Amenities", "summary": "Căn hộ hơi cũ nhưng có hồ bơi đẹp và vị trí thuận tiện."}, {"id": 18, "reviewer_name": "Guest #18", "rating": 5, "review_text": "Tình trạng tốt, dịch vụ tốt, môi trường tốt, vị trí tốt.", "sentiment": "Positive", "pain_point_flag": false, "category": "Others", "summary": "Đánh giá tốt về mọi mặt từ dịch vụ đến vị trí."}, {"id": 19, "reviewer_name": "Guest #19", "rating": 5, "review_text": "Đây là một bể bơi tuyệt đẹp.", "sentiment": "Positive", "pain_point_flag": false, "category": "Room_Amenities", "summary": "Bể bơi đẹp."}, {"id": 20, "reviewer_name": "Guest #20", "rating": 5, "review_text": "Vị trí thuận tiện, đầy đủ tiện nghi, view đẹp từ giường, rất thích ở đây, có siêu thị 7/11 ở tầng trệt.", "sentiment": "Positive", "pain_point_flag": false, "category": "Location_and_Access", "summary": "Vị trí thuận tiện, tiện nghi đầy đủ và view đẹp."}, {"id": 21, "reviewer_name": "Guest #21", "rating": 5, "review_text": "Nó ngon tuyệt.", "sentiment": "Positive", "pain_point_flag": false, "category": "F_and_B", "summary": "The food is delicious."}, {"id": 22, "reviewer_name": "Guest #22", "rating": 5, "review_text": "Tôi rất hài lòng! Tôi muốn quay lại đây lần nữa. Mặc dù là một tòa nhà cũ, nhưng nó được bảo trì khá tốt, và tôi được biết rằng đối với những kỳ nghỉ dài ngày, việc dọn dẹp được thực hiện định kỳ, nếu không phải mỗi ngày. Chủ nhà rất tốt …", "sentiment": "Positive", "pain_point_flag": false, "category": "Staff_Service", "summary": "Great experience, well-maintained building, and very kind host."}, {"id": 23, "reviewer_name": "Guest #23", "rating": 5, "review_text": "Phòng là phòng studio, nhưng nhìn chung sạch sẽ và ngăn nắp. Vì hơi cũ nên cảm giác hơi lỗi thời, nhưng nhìn chung, tôi đã ở đó mà không gặp vấn đề gì lớn.", "sentiment": "Neutral", "pain_point_flag": false, "category": "Cleanliness", "summary": "Clean and tidy studio, though the decor feels a bit dated."}, {"id": 24, "reviewer_name": "Guest #24", "rating": 5, "review_text": "Mình có trải nghiệm tốt tại đây. Nhân viện thân thiện và hỗ trợ nhiệt tình. Hầm giữ xe rộng rãi. Các tiện ích xung quanh đầy đủ.", "sentiment": "Positive", "pain_point_flag": false, "category": "Staff_Service", "summary": "Friendly staff, helpful service, and convenient parking."}, {"id": 25, "reviewer_name": "Guest #25", "rating": 5, "review_text": "Chị rất vui khi gặp đc e kì duyên hứa bao xe  2 chiều 1 Chiều đi 1chiều về ,và chị nhận 1tiểng đến bên e kì duyên và 1chuyến bao về với e , và chị mai nhận đc vêchrer 3ngày 2 đêm, chị đem cccd sản rồi đem cccd chị mai về", "sentiment": "Neutral", "pain_point_flag": false, "category": "Others", "summary": "Review regarding booking arrangements and transportation."}, {"id": 26, "reviewer_name": "Guest #26", "rating": 5, "review_text": "Nói về chỗ ở gần trung tâm và thuận tiện di chuyển thì mình thật sự thích The Manor, so với Vinhomes central park thì giá bên này rẻ hơn, nhưng với việc quản lý rất tốt thì The Manor rất đáng sống", "sentiment": "Positive", "pain_point_flag": false, "category": "Pricing_and_Fees", "summary": "Good location, affordable price, and excellent management."}, {"id": 27, "reviewer_name": "Guest #27", "rating": 5, "review_text": "Bảo vệ nhiệt tình phục vụ như khách sạn dù đây là apartment, hành lang, thang máy luôn sạch sẽ.", "sentiment": "Positive", "pain_point_flag": false, "category": "Staff_Service", "summary": "Enthusiastic security staff and clean common areas."}, {"id": 28, "reviewer_name": "Guest #28", "rating": 5, "review_text": "👍 …", "sentiment": "Positive", "pain_point_flag": false, "category": "None", "summary": "Positive feedback."}, {"id": 29, "reviewer_name": "Guest #29", "rating": 5, "review_text": "Nhìn ngắm sài gòn với những ngày không làm gì", "sentiment": "Positive", "pain_point_flag": false, "category": "None", "summary": "Enjoyed the view and relaxing atmosphere."}, {"id": 30, "reviewer_name": "Guest #30", "rating": 5, "review_text": "Yên bình", "sentiment": "Positive", "pain_point_flag": false, "category": "Noise_and_Quietness", "summary": "Peaceful environment."}, {"id": 31, "reviewer_name": "Guest #31", "rating": 5, "review_text": "Tuyệt vời", "sentiment": "Positive", "pain_point_flag": false, "category": "Others", "summary": "Tuyệt vời"}, {"id": 32, "reviewer_name": "Guest #32", "rating": 5, "review_text": "Lịch sự , hầm gửi xe thoáng", "sentiment": "Positive", "pain_point_flag": false, "category": "Others", "summary": "Lịch sự và hầm gửi xe thoáng"}, {"id": 33, "reviewer_name": "Guest #33", "rating": 5, "review_text": "Tốt", "sentiment": "Positive", "pain_point_flag": false, "category": "Others", "summary": "Tốt"}, {"id": 34, "reviewer_name": "Guest #34", "rating": 5, "review_text": "Tuyệt", "sentiment": "Positive", "pain_point_flag": false, "category": "Others", "summary": "Tuyệt"}, {"id": 35, "reviewer_name": "Guest #35", "rating": 5, "review_text": "Đẹp", "sentiment": "Positive", "pain_point_flag": false, "category": "Boutique_Experience", "summary": "Đẹp"}, {"id": 36, "reviewer_name": "Guest #36", "rating": 5, "review_text": "Phòng ấm cúng và rộng rãi. Vị trí thuận tiện, gần mọi thứ. Tôi đã có một kỳ nghỉ tuyệt vời và thoải mái, tôi rất khuyên bạn nên chọn nơi này.", "sentiment": "Positive", "pain_point_flag": false, "category": "Room_Amenities", "summary": "Phòng ấm cúng, rộng rãi và vị trí thuận tiện"}, {"id": 37, "reviewer_name": "Guest #37", "rating": 5, "review_text": "Tôi đã có một kỳ nghỉ tuyệt vời. Bể bơi trên tầng 25 rất tuyệt, và tôi đánh giá cao việc có chỗ đậu xe dành cho taxi Grab. Ngoài ra còn có một cửa hàng tiện lợi nhỏ ở tầng một.", "sentiment": "Positive", "pain_point_flag": false, "category": "Boutique_Experience", "summary": "Bể bơi đẹp, tiện ích đậu xe và cửa hàng tiện lợi tốt"}, {"id": 38, "reviewer_name": "Guest #38", "rating": 5, "review_text": "Vị trí tuyệt vời! Nằm ngay giữa nhiều khu vực và chỉ cách trung tâm quận 1 10 phút đi xe. Tầm nhìn ngoạn mục ra tòa nhà Landmark 81 nếu bạn có thể đặt phòng hướng Bắc/Đông. Bể bơi trên sân thượng tuyệt vời, tầm nhìn bao quát tuyệt đẹp và …", "sentiment": "Positive", "pain_point_flag": false, "category": "Location_and_Access", "summary": "Vị trí tuyệt vời, view đẹp và bể bơi sân thượng ấn tượng"}, {"id": 39, "reviewer_name": "Guest #39", "rating": 5, "review_text": "Tôi thích ở đây, tôi ở tầng cao nhất nên rất yên tĩnh, không bị ảnh hưởng bởi tiếng ồn giao thông bên dưới. Đi bộ khoảng 40 phút là vào trung tâm thành phố, nhưng ở khu vực đó có một số nhà hàng và quán cà phê ngon. Ngoài ra còn có một siêu …", "sentiment": "Positive", "pain_point_flag": false, "category": "Noise_and_Quietness", "summary": "Yên tĩnh ở tầng cao và gần nhiều nhà hàng"}, {"id": 40, "reviewer_name": "Guest #40", "rating": 5, "review_text": "Tôi từng đến đây một lần với tư cách kỹ thuật viên để hỗ trợ khách hàng. Nơi này nằm trên đường Nguyễn Hữu Canh, có view rất đẹp, đối diện cổng vào là tòa nhà Landmark 81, tòa nhà mà tôi rất thích. An ninh tốt và bảo vệ thân thiện. Thiết kế căn hộ đẹp, tôi rất ấn tượng.", "sentiment": "Positive", "pain_point_flag": false, "category": "Boutique_Experience", "summary": "Thiết kế đẹp, an ninh tốt và bảo vệ thân thiện"}, {"id": 41, "reviewer_name": "Guest #41", "rating": 5, "review_text": "Vị trí tuyệt vời tại khu trung tâm thương mại Sài Gòn, gần quán rượu Bác Long Phương. Tòa nhà có tầm nhìn hoàn hảo ra màn trình diễn pháo hoa. Khu vực rất an ninh và có chỗ đậu xe. Nhân viên tòa nhà nhiệt tình và chuyên nghiệp. Rất đáng để lựa chọn!", "sentiment": "Positive", "pain_point_flag": false, "category": "Location_and_Access", "summary": "Vị trí tuyệt vời, an ninh tốt và nhân viên chuyên nghiệp."}, {"id": 42, "reviewer_name": "Guest #42", "rating": 5, "review_text": "Nơi tuyệt vời để ở, tôi đã ở đây 2 ngày qua Airbnb và rất hài lòng.\n\nMọi thứ đều gọn gàng và sạch sẽ. Quảng trường Thời đại chỉ cách đó 5 km. …", "sentiment": "Positive", "pain_point_flag": false, "category": "Cleanliness", "summary": "Nơi ở gọn gàng, sạch sẽ và vị trí thuận tiện."}, {"id": 43, "reviewer_name": "Guest #43", "rating": 5, "review_text": "Tòa nhà Manor có vị trí rất thuận lợi và dễ dàng tiếp cận. Tòa nhà và các căn hộ đều trang nhã và được xây dựng tốt. Thiết kế bao gồm nhiều không gian mở, được ngăn cách khỏi tiếng ồn và sự hối hả nhộn nhịp của con đường phía trước.", "sentiment": "Positive", "pain_point_flag": false, "category": "Noise_and_Quietness", "summary": "Thiết kế trang nhã, không gian yên tĩnh dù nằm ở vị trí trung tâm."}, {"id": 44, "reviewer_name": "Guest #44", "rating": 5, "review_text": "Địa điểm thuận tiện, và chủ nhà Jincheol phản hồi nhanh chóng.", "sentiment": "Positive", "pain_point_flag": false, "category": "Staff_Service", "summary": "Địa điểm thuận tiện và chủ nhà phản hồi nhanh."}, {"id": 45, "reviewer_name": "Guest #45", "rating": 5, "review_text": "Nơi này sạch sẽ, không chật chội và rất tiện lợi vì có cửa hàng tiện lợi gần đó.", "sentiment": "Positive", "pain_point_flag": false, "category": "Cleanliness", "summary": "Nơi ở sạch sẽ, không gian thoải mái và gần cửa hàng tiện lợi."}, {"id": 46, "reviewer_name": "Guest #46", "rating": 5, "review_text": "Căn hộ tuyệt vời, hồ bơi đẹp, vị trí đắc địa, và chỉ cách chợ Bình Thạnh, đường Bùi Viện một quãng ngắn. …", "sentiment": "Positive", "pain_point_flag": false, "category": "Location_and_Access", "summary": "Căn hộ tuyệt vời với hồ bơi đẹp và vị trí đắc địa."}, {"id": 47, "reviewer_name": "Guest #47", "rating": 5, "review_text": "Căn hộ đẹp với nhân viên thân thiện, cửa hàng tiện lợi Seven Eleven và hồ bơi sạch sẽ trên sân thượng.", "sentiment": "Positive", "pain_point_flag": false, "category": "Room_Amenities", "summary": "Căn hộ đẹp, nhân viên thân thiện và có hồ bơi sạch."}, {"id": 48, "reviewer_name": "Guest #48", "rating": 5, "review_text": "Các câu lạc bộ rất tốt với giá cả phải chăng, Nam rất nhiệt tình và thân thiện.", "sentiment": "Positive", "pain_point_flag": false, "category": "Staff_Service", "summary": "Dịch vụ tốt, giá cả phải chăng và nhân viên nhiệt tình."}, {"id": 49, "reviewer_name": "Guest #49", "rating": 5, "review_text": "Thuận tiện bắt taxi đi vào thành phố và mua sắm\nTôi rất thích căn hộ này.", "sentiment": "Positive", "pain_point_flag": false, "category": "Location_and_Access", "summary": "Thuận tiện di chuyển và mua sắm."}, {"id": 50, "reviewer_name": "Guest #50", "rating": 5, "review_text": "Nơi lưu trú tốt. Sạch sẽ.", "sentiment": "Positive", "pain_point_flag": false, "category": "Cleanliness", "summary": "Nơi lưu trú tốt và sạch sẽ."}, {"id": 51, "reviewer_name": "Guest #51", "rating": 5, "review_text": "Bảo mật và riêng tư, trên hết là thay đổi kết nối.", "sentiment": "Positive", "pain_point_flag": false, "category": "Boutique_Experience", "summary": "Khách sạn mang lại cảm giác riêng tư và bảo mật tốt."}, {"id": 52, "reviewer_name": "Guest #52", "rating": 5, "review_text": "Tuyệt", "sentiment": "Positive", "pain_point_flag": false, "category": "Others", "summary": "Đánh giá tích cực ngắn gọn."}, {"id": 53, "reviewer_name": "Guest #53", "rating": 5, "review_text": "Được rồi", "sentiment": "Neutral", "pain_point_flag": false, "category": "Others", "summary": "Trải nghiệm ở mức trung bình."}, {"id": 54, "reviewer_name": "Guest #54", "rating": 5, "review_text": "Chúc mừng sinh nhật Voi.", "sentiment": "Neutral", "pain_point_flag": false, "category": "Others", "summary": "Lời chúc mừng sinh nhật."}, {"id": 55, "reviewer_name": "Guest #55", "rating": 5, "review_text": "Khách sạn có bãi đỗ oto.  Ở Sài Gòn mà kiếm dc chỗ ở có bãi oto ít chỗ có lắm luôn nhưng ksan này có nhé. Phòng rất rộng và thoải mái, đầy đủ tiện nghi\nLễ tân và bell đều dễ thương. Chiều mỗi ngày đều có bạn mang bánh đặc sản lên …", "sentiment": "Positive", "pain_point_flag": false, "category": "Room_Amenities", "summary": "Khách sạn có bãi đỗ xe thuận tiện, phòng rộng rãi và dịch vụ chu đáo."}, {"id": 56, "reviewer_name": "Guest #56", "rating": 5, "review_text": "Tuần trước trong chuyến du lịch TP.HCM, vợ chồng tôi ở một căn hộ tại Landmark gần đó và tình cờ biết đến khách sạn Oakwood Hotel & Apartments Saigon. Sau khi ghé trải nghiệm, chúng tôi thực sự rất hài lòng.|Khách sạn có cơ sở vật chất rất …", "sentiment": "Positive", "pain_point_flag": false, "category": "Room_Amenities", "summary": "Khách hàng hài lòng với cơ sở vật chất của khách sạn."}, {"id": 57, "reviewer_name": "Guest #57", "rating": 5, "review_text": "Mình vừa có dịp lưu trú tại Oakwood Hotel & Apartments Saigon và thật sự rất hài lòng. Khách sạn có vị trí khá thuận tiện, dễ dàng di chuyển đến trung tâm cũng như các khu vực ăn uống, giải trí. …", "sentiment": "Positive", "pain_point_flag": false, "category": "Location_and_Access", "summary": "Vị trí thuận tiện cho việc di chuyển và giải trí."}, {"id": 58, "reviewer_name": "Guest #58", "rating": 5, "review_text": "Shipper. Giao hàng có mấy đồng 1 đơn mà đâụ xe bên ngoài bảo vệ không cho, bắt gửi xe trong toà nhà. Đồng ý vậy đi, mà phí gửi xe chém tới 15k/lượt cho xe máy, phí còn mắc hơn mấy toà nhà chọc trời khu trung tâm quận 1. Bảng giá gửi xe cũng …", "sentiment": "Negative", "pain_point_flag": true, "category": "Pricing_and_Fees", "summary": "Phí gửi xe quá cao và quy định đỗ xe gây bất tiện cho shipper."}, {"id": 59, "reviewer_name": "Guest #59", "rating": 5, "review_text": "Mình rất hài lòng với dịch vụ cũng như tiện nghi ở đây. Chỉ có điều làm mình hơi khó chịu đó là lúc lễ tân làm thủ tục đã vô tình đọc thành tiếng thông tin cá nhân của mình. Mặc dù chỉ là ngày tháng năm sinh thôi nhưng mình vẫn thấy không thoải mái, hy vọng lễ tân sẽ khắc phục điều này", "sentiment": "Negative", "pain_point_flag": true, "category": "Staff_Service", "summary": "Nhân viên lễ tân làm lộ thông tin cá nhân của khách hàng."}, {"id": 60, "reviewer_name": "Guest #60", "rating": 5, "review_text": "Tôi đã có những trải nghiệm thật sự tuyệt vời tại nơi đây khi đi cùng bạn. Ngay từ lúc nhận phòng, chúng tôi đã cảm nhận được sự thân thiện và hiếu khách từ đội ngũ nhân viên – luôn niềm nở, tận tình hỗ trợ. Không gian phòng sạch sẽ, gọn …", "sentiment": "Positive", "pain_point_flag": false, "category": "Staff_Service", "summary": "Nhân viên thân thiện, nhiệt tình và phòng ốc sạch sẽ."}, {"id": 61, "reviewer_name": "Guest #61", "rating": 5, "review_text": "Khách sạn rất đẹp, nhân viên tận tình và chuyên nghiệp trong phục vụ, view phòng thoáng mát sạch sẽ.", "sentiment": "Positive", "pain_point_flag": false, "category": "Staff_Service", "summary": "Khách sạn đẹp, nhân viên tận tình, phòng sạch sẽ."}, {"id": 62, "reviewer_name": "Guest #62", "rating": 5, "review_text": "Trải nghiệm tại Oakwood thật sự đáng đồng tiền bát gạo. Phòng ốc thiết kế tinh tế, hiện đại và ấm cúng như ở nhà. Nhân viên hỗ trợ tận tâm, chuyên nghiệp. Một lựa chọn hoàn hảo cho kỳ nghỉ.", "sentiment": "Positive", "pain_point_flag": false, "category": "Boutique_Experience", "summary": "Trải nghiệm đáng tiền, phòng thiết kế tinh tế, nhân viên chuyên nghiệp."}, {"id": 63, "reviewer_name": "Guest #63", "rating": 5, "review_text": "Phòng mới hiện đại tiện nghi. Nhân viên chuyên nghiệp. Sẽ quay lại cho dịp tới", "sentiment": "Positive", "pain_point_flag": false, "category": "Room_Amenities", "summary": "Phòng hiện đại, tiện nghi, nhân viên chuyên nghiệp."}, {"id": 64, "reviewer_name": "Guest #64", "rating": 5, "review_text": "Vi trí kg quá ồn ào. Phòng sach đầy đủ tiện nghi. Các bạn nhân viên vui vẻ thân thiện. Tuyệt vời.", "sentiment": "Positive", "pain_point_flag": false, "category": "Location_and_Access", "summary": "Vị trí yên tĩnh, phòng sạch, nhân viên thân thiện."}, {"id": 65, "reviewer_name": "Guest #65", "rating": 5, "review_text": "Rất thoải mái khi ở tại đây, khách sạn thật chu đáo khi đáp ứng các nhu cầu của mình, mình thật sự đánh giá cao cách họ phục vụ tại đây. Mình sẽ giới thiệu nơi này cho người thân và bạn bè của mình, vị trí khách sạn cũng rất thuận lợi mặc dù hơi xa trung tâm quận 1 nhưng chỉ tốn 10-15 phút đi xe vẫn rất là tiện.", "sentiment": "Positive", "pain_point_flag": false, "category": "Staff_Service", "summary": "Dịch vụ chu đáo, vị trí thuận lợi dù hơi xa trung tâm."}, {"id": 66, "reviewer_name": "Guest #66", "rating": 5, "review_text": "Trải nghiệm tại Oakwood thật sự đáng nhớ. Khách sạn không chỉ là nơi nghỉ ngơi mà còn mang đến cảm giác ấm áp và thân thiện thông qua chất lượng dịch vụ tuyệt vời. Từ không gian đến cách phục vụ đều khiến tôi cảm thấy gần gũi như đang ở …", "sentiment": "Positive", "pain_point_flag": false, "category": "Boutique_Experience", "summary": "Trải nghiệm đáng nhớ, không gian ấm áp và dịch vụ tuyệt vời."}, {"id": 67, "reviewer_name": "Guest #67", "rating": 5, "review_text": "Giữa vô vàn các khách sạn trên khắp Sài Gòn, thật sự mình rất thích nơi đây, cảm giác thật sự rất thân thuộc, mọi thứ họ cung cấp đều rất chu đáo và chuyên nghiệp. các bạn nhân viên đều rất hỗ trợ và nhiệt tình, mình thích cách bài trí từ …", "sentiment": "Positive", "pain_point_flag": false, "category": "Boutique_Experience", "summary": "Cảm giác thân thuộc, dịch vụ chu đáo và nhân viên nhiệt tình."}, {"id": 68, "reviewer_name": "Guest #68", "rating": 5, "review_text": "Khách sạn 4 sao với dịch vụ chuyên nghiệp và không gian sạch sẽ, thoải mái. Nhân viên thân thiện, hỗ trợ nhiệt tình và luôn tạo cảm giác dễ chịu cho khách. Tôi rất hài lòng và sẽ quay lại trong những lần lưu trú tiếp theo.", "sentiment": "Positive", "pain_point_flag": false, "category": "Staff_Service", "summary": "Dịch vụ chuyên nghiệp, không gian sạch sẽ, nhân viên thân thiện."}, {"id": 69, "reviewer_name": "Guest #69", "rating": 5, "review_text": "Chúng tôi đánh giá cao sự nhiệt tình và tận tâm của các bạn nhân viên, đội ngũ lễ tân đã làm cho kì nghỉ chúng tôi trở nên tuyệt vời, chúng tôi sẽ quay lại trong thời gian sớm nhất.", "sentiment": "Positive", "pain_point_flag": false, "category": "Staff_Service", "summary": "Đội ngũ nhân viên nhiệt tình và tận tâm."}, {"id": 70, "reviewer_name": "Guest #70", "rating": 5, "review_text": "Phòng đẹp, sạch sẽ. Dịch vụ tốt. Lễ tân lịch sự và vị trí đẹp.", "sentiment": "Positive", "pain_point_flag": false, "category": "Room_Amenities", "summary": "Phòng đẹp, sạch sẽ, dịch vụ tốt và vị trí đẹp."}, {"id": 71, "reviewer_name": "Guest #71", "rating": 5, "review_text": "Tôi đã ở ks Oakwood tại Tp Hồ Chí Minh trong chuyến công tác vừa rồi. Đây quả thật là một nơi đã cho tôi trải nghiệm các dịch vụ chuyên nghiệp, tinh tế đến từng chi tiết, xứng đáng là ks đạt tiêu chuẩn đẳng cấp quốc tế. Phòng ốc sạch sẽ, …", "sentiment": "Positive", "pain_point_flag": false, "category": "Boutique_Experience", "summary": "Trải nghiệm dịch vụ chuyên nghiệp, tinh tế và phòng ốc sạch sẽ."}, {"id": 72, "reviewer_name": "Guest #72", "rating": 5, "review_text": "Khách sạn thật sự xứng đáng 5 sao – từ không gian sang trọng, tiện nghi hiện đại đến đội ngũ nhân viên vô cùng chuyên nghiệp và nhiệt tình. Mọi chi tiết đều được chăm chút kỹ lưỡng, mang đến cảm giác thoải mái và đẳng cấp. Rất xịn xò và đáng để quay lại!", "sentiment": "Positive", "pain_point_flag": false, "category": "Boutique_Experience", "summary": "Không gian sang trọng, tiện nghi hiện đại và nhân viên chuyên nghiệp."}, {"id": 73, "reviewer_name": "Guest #73", "rating": 5, "review_text": "Phòng đẹp, vị trí đẹp, nhân viên dễ thương, dịch vụ ok", "sentiment": "Positive", "pain_point_flag": false, "category": "Others", "summary": "Phòng đẹp, vị trí tốt và nhân viên dễ thương."}, {"id": 74, "reviewer_name": "Guest #74", "rating": 5, "review_text": "Tôi đã ở đây và cực kỳ thích cách họ phục vụ, mọi thứ đều rất chỉn chu và tận tâm. Sẽ quay lại vào lần tới 🤩 …", "sentiment": "Positive", "pain_point_flag": false, "category": "Staff_Service", "summary": "Dịch vụ chỉn chu và tận tâm."}, {"id": 75, "reviewer_name": "Guest #75", "rating": 5, "review_text": "Mình và bạn chọn ở Oakwood vì gần landmark 81, gần train station (Tân Cảng) để ra Quận 1, tiện ăn uống vui chơi mua sắm với bạn bè. Phòng ốc rộng rãi, sạch sẽ, đầy đủ tiện nghi, dạng service apartment có phòng khách tách biệt với phòng ngủ, …", "sentiment": "Positive", "pain_point_flag": false, "category": "Location_and_Access", "summary": "Vị trí thuận tiện gần Landmark 81 và ga tàu, phòng ốc rộng rãi."}, {"id": 76, "reviewer_name": "Guest #76", "rating": 5, "review_text": "Nhân viên khách sạn thân thiện, hỗ trợ nhiệt tình\nPhòng rộng thoải mái,sạch sẽ, cảm giác như ở nhà hơn là khách sạn\nGần landmark 81,thuận tiện đi lại …", "sentiment": "Positive", "pain_point_flag": false, "category": "Staff_Service", "summary": "Nhân viên thân thiện, phòng sạch sẽ và vị trí thuận tiện."}, {"id": 77, "reviewer_name": "Guest #77", "rating": 5, "review_text": "Lần đầu mình trải nghiệm dịch vụ ở khách sạn và rất hài lòng. Phòng ở sạch sẽ, nhân viên nhiệt tình hỗ trợ ngay lúc mình cần. Vị trí Khách sạn thì gần Metro và Landmark81, rất hợp lý với nhu cầu muốn đi tham quan của gia đình của mình.", "sentiment": "Positive", "pain_point_flag": false, "category": "Location_and_Access", "summary": "Phòng sạch, nhân viên nhiệt tình và vị trí gần Metro, Landmark 81."}, {"id": 78, "reviewer_name": "Guest #78", "rating": 5, "review_text": "Nhân viên thân thiện, dịch vụ tốt, phòng hiện đại, view đẹp, sẽ quay lại dịp sau", "sentiment": "Positive", "pain_point_flag": false, "category": "Room_Amenities", "summary": "Nhân viên thân thiện, phòng hiện đại và view đẹp."}, {"id": 79, "reviewer_name": "Guest #79", "rating": 5, "review_text": "Khách sạn rất là tốt từ dịch vụ , phòng cho đến các bạn nhân viên, mình rất thích cách phục vụ và tôn trọng khách hàng của khách sạn. Chắc chắn sẽ quay lại vào lần tiếp theo 🥰 …", "sentiment": "Positive", "pain_point_flag": false, "category": "Staff_Service", "summary": "Dịch vụ tốt, nhân viên tôn trọng khách hàng."}, {"id": 80, "reviewer_name": "Guest #80", "rating": 5, "review_text": "Tôi đã có những trải nghiệm thật sự tuyệt vời tại nơi đây khi đi cùng bạn. Ngay từ lúc nhận phòng, chúng tôi đã cảm nhận được sự thân thiện và hiếu khách từ đội ngũ nhân viên – luôn niềm nở, tận tình hỗ trợ. Không gian phòng sạch sẽ, gọn …", "sentiment": "Positive", "pain_point_flag": false, "category": "Staff_Service", "summary": "Nhân viên thân thiện, hiếu khách và phòng sạch sẽ."}, {"id": 81, "reviewer_name": "Guest #81", "rating": 5, "review_text": "Mùnh muốn hỏi ad về giá giữ xe ở bãi xe tầng hầm, bảng giá xe niêm yết có mấy ngàn thôi, vậy tại sao mình đi lúc 5h30 sáng thì bảo vệ thu tiền xe tận 40.000, họ noi lý do là trước 6h thu 40.000, trong khi đó bảng giá mình đọc mà khoonh thấy ghi, giải thích giúp mình", "sentiment": "Negative", "pain_point_flag": true, "category": "Pricing_and_Fees", "summary": "Customer was overcharged for parking compared to the listed price without clear explanation."}, {"id": 82, "reviewer_name": "Guest #82", "rating": 5, "review_text": "Là một khách sạn căn hộ ngay trung tâm thành phố, gần với các địa điểm hot Thành phố. Phòng ốc hiện đại, sang trọng, lối kiến trúc trẻ trung. Có các hạng phòng và view để lựa chọn ( tầng cao đối diện Landmark 81 là một lựa chọn hoàn hảo). …", "sentiment": "Positive", "pain_point_flag": false, "category": "Location_and_Access", "summary": "Great central location with modern, stylish rooms and excellent views."}, {"id": 83, "reviewer_name": "Guest #83", "rating": 5, "review_text": "Không gian thoáng mát, phòng ốc thì siêu hợp gu với mình hiii. Mấy anh chị nhân viên thì nhiệt tình nữa. Nói chung nếu có quay lại sẽ tiếp tục ưu tiên đầu tiên", "sentiment": "Positive", "pain_point_flag": false, "category": "Staff_Service", "summary": "Comfortable space, stylish rooms, and enthusiastic staff."}, {"id": 84, "reviewer_name": "Guest #84", "rating": 5, "review_text": "Mình đến đây tuy chỉ ở ít ngày nhưng thật sự rất bất ngờ và ấn tượng với cách phục vụ ở nơi đây, cám ơn các bạn lễ tân, buồng phòng, các bạn bảo vệ và những bạn nhân viên khác đã luôn hết mình vì công việc để đảm bảo dịch vụ khách sạn luôn ở mức tốt nhất 😊😊 …", "sentiment": "Positive", "pain_point_flag": false, "category": "Staff_Service", "summary": "Impressed by the dedicated and professional service from all hotel staff."}, {"id": 85, "reviewer_name": "Guest #85", "rating": 5, "review_text": "Đây đúng là lựa chọn đúng đắn cho kỳ nghỉ của mình tại TP.HCM. Vị trí thuận tiện, cơ sở vật chất hiện đại và dịch vụ chuyên nghiệp và rất ân cần với khách hàng, khách sạn này đã để lại cho mình một kỳ nghỉ đáng nhớ. …", "sentiment": "Positive", "pain_point_flag": false, "category": "Others", "summary": "Convenient location, modern facilities, and professional service made for a memorable stay."}, {"id": 86, "reviewer_name": "Guest #86", "rating": 5, "review_text": "Đồ ăn thì làm khẩu vị vừa ăn ngon, phục vụ nhiệt tình dễ thương, vị trí quán cũng dễ tìm quán decore cũng ổn, website làm bắt mắt dễ thương, nhưng có điểm trừ là khẩu phần quá ít so với giá, ốc len xào dừa ko đắt nhưng 1 phần có xíu à. Mong quán điều chỉnh lại phù hợp hơn.", "sentiment": "Neutral", "pain_point_flag": true, "category": "F_and_B", "summary": "Good taste and service, but the portion sizes are too small for the price."}, {"id": 87, "reviewer_name": "Guest #87", "rating": 5, "review_text": "Khách sạn ở vị trí thuận tiện, có dịch vụ xe shuttle bus miễn phí đi trung tâm thành phố. View sông Sài Gòn và Landmark rất đẹp, phòng rộng rãi và đầy đủ tiện nghi. Đội ngũ nhân viên và dịch vụ tại đây rất tốt. Sẽ ghé lại nếu có dịp đến Sài Gòn.", "sentiment": "Positive", "pain_point_flag": false, "category": "Location_and_Access", "summary": "Convenient location with shuttle service, beautiful views, and excellent staff."}, {"id": 88, "reviewer_name": "Guest #88", "rating": 5, "review_text": "Mọi thứ ở đây thật tuyệt vời.  Hài lòng 500%. Hãy gìn giữ và phát huy những điều tốt đẹp đang có. Chúc thành công!\n❤️❤️❤️❤️❤️❤️", "sentiment": "Positive", "pain_point_flag": false, "category": "Others", "summary": "Extremely satisfied with the overall experience."}, {"id": 89, "reviewer_name": "Guest #89", "rating": 5, "review_text": "Không gian thoải mái, sang trọng, nhân viên phục vụ tận tâm. Cảm ơn khách sạn đã mang đến trải nghiệm tốt khi tôi công tác ở đây", "sentiment": "Positive", "pain_point_flag": false, "category": "Staff_Service", "summary": "Comfortable, luxurious space with dedicated staff."}, {"id": 90, "reviewer_name": "Guest #90", "rating": 5, "review_text": "rất thích không khí tại khách sạn\nPhòng rất sạch sẽ, thoải mái, giường và gối rất mềm mại, êm ái\nCác bạn nhân viên cực kì thân thiện và niềm nở …", "sentiment": "Positive", "pain_point_flag": false, "category": "Cleanliness", "summary": "Clean, comfortable rooms with soft bedding and friendly staff."}, {"id": 91, "reviewer_name": "Guest #91", "rating": 5, "review_text": "Khách sạn có không gian rộng rãi. Phòng rộng và đẹp, đầy đủ tiện nghi. Phòng có view nhìn ra bờ sông. Nhân viên dễ thương, thân thiện. Bãi giữ xe rộng rãi. Xứng đáng với giá tiền. Gần công ty nên tiện đi lại.", "sentiment": "Positive", "pain_point_flag": false, "category": "Room_Amenities", "summary": "Spacious room with river view, friendly staff, and convenient parking."}, {"id": 92, "reviewer_name": "Guest #92", "rating": 5, "review_text": "tôi đã có trải nghiệm tuyệt vời tại đây vào cuối tuần , khách sạn có view đẹp , nhân viên thân thiện dễ thương , chắc chắn tôi sẽ quay lại nếu có dịp", "sentiment": "Positive", "pain_point_flag": false, "category": "Boutique_Experience", "summary": "Great weekend experience with beautiful views and friendly staff."}, {"id": 93, "reviewer_name": "Guest #93", "rating": 5, "review_text": "Sau nhiều lần công tác tại Tp. Hồ Chí Minh đây là nơi đầu tiên tôi lựa chọn để nghỉ ngơi trong những chuyến công tác. Nhân viên ở đây cực kì thân thiện và nhiệt tình. Phòng ốc rộng rãi đầy đủ tiện nghi, phòng luôn trong trạng thái sạch sẽ sau khi tôi tan làm về. Một trải nghiệm tuyệt vời !", "sentiment": "Positive", "pain_point_flag": false, "category": "Staff_Service", "summary": "Excellent service, clean and spacious rooms, ideal for business trips."}, {"id": 94, "reviewer_name": "Guest #94", "rating": 5, "review_text": "Phòng ở đây rộng và sạch sẽ, tuy nhiên phải đi taxi khoảng 5 phút vào trung tâm. Giá phòng rất rẻ, buổi tối view sông rất đẹp.", "sentiment": "Positive", "pain_point_flag": true, "category": "Location_and_Access", "summary": "Clean and spacious rooms with good views, but slightly far from the city center."}, {"id": 95, "reviewer_name": "Guest #95", "rating": 5, "review_text": "Phòng rất rộng và đẹp (1,4tr) có bồn tắm.\nCó buffet sáng tầng 12, quầy bar dưới sảnh.\nChỗ đậu xe hơi trước cửa. …", "sentiment": "Positive", "pain_point_flag": false, "category": "Room_Amenities", "summary": "Spacious room with bathtub, breakfast buffet, and convenient parking."}, {"id": 96, "reviewer_name": "Guest #96", "rating": 5, "review_text": "Không gian đẹp, nhân viên dễ thương ✨", "sentiment": "Positive", "pain_point_flag": false, "category": "Boutique_Experience", "summary": "Beautiful space and friendly staff."}, {"id": 97, "reviewer_name": "Guest #97", "rating": 5, "review_text": "Phòng rộng và nội thất ổn, thiết kế hiện đại.  So giá phòng trung bình thì được coi là một deal tốt. Chỉ vị trí thì ko được trung tâm lắm.", "sentiment": "Positive", "pain_point_flag": true, "category": "Location_and_Access", "summary": "Good value for money and modern design, but location is not central."}, {"id": 98, "reviewer_name": "Guest #98", "rating": 5, "review_text": "Phòng rộng, đầy đủ tiện nghi, mới, sạch sẽ, yên tĩnh, view sông Sài Gòn. Điểm trừ phòng duy nhất là tv không phải smart tv, không xem được youtube hay netflix. Nhân viên chu đáo, dịch vụ tốt.", "sentiment": "Positive", "pain_point_flag": true, "category": "Room_Amenities", "summary": "Great room and service, but the TV lacks smart features like YouTube or Netflix."}, {"id": 99, "reviewer_name": "Guest #99", "rating": 5, "review_text": "Trải nghiệm tuyệt vời khi lưu trú tại Oakwood, lễ tân thân thiện, nhân viên làm phòng rất nhiệt tình, phòng rộng rãi thoáng mát, đồ ăn sáng buffet khá hợp khẩu vị, sẽ quay lại trong nhiều lần tiếp theo.", "sentiment": "Positive", "pain_point_flag": false, "category": "Staff_Service", "summary": "Excellent stay with friendly staff and good breakfast buffet."}, {"id": 100, "reviewer_name": "Guest #100", "rating": 5, "review_text": "Dịch vụ tốt, phòng view nhìn ra sông Sài Gòn rất đẹp. Khu vực lobby lounge rộng rãi, trang trí màu sắc sinh động. Sẽ quay lại lưu trú ở đây trong tương lai.", "sentiment": "Positive", "pain_point_flag": false, "category": "Boutique_Experience", "summary": "Good service, beautiful river view, and vibrant lobby area."}, {"id": 101, "reviewer_name": "Guest #101", "rating": 5, "review_text": "Khách sạn có view bờ sông rất đẹp, nhân viên rất thân thiện luôn hỗ trợ tôi lúc cần , phòng sạch sẽ , giường rất thoải mái , tôi đã ngủ rất ngon , tôi sẽ quay lại khi vào sài gòn lần tiếp theo", "sentiment": "Positive", "pain_point_flag": false, "category": "Boutique_Experience", "summary": "Excellent river view, friendly staff, clean room, and comfortable bed."}, {"id": 102, "reviewer_name": "Guest #102", "rating": 5, "review_text": "Ngoài chi phí phòng ra thì khách bắt buộc phải cọc 1,000,000 VND cho chi phí phát sinh trước khi nhận phòng. Khách nào cũng phải cọc theo quy định của khách sạn nhưng không hề có thông báo nào về việc này một cách công khai. Thậm chí khi …", "sentiment": "Negative", "pain_point_flag": true, "category": "Pricing_and_Fees", "summary": "Lack of transparency regarding mandatory security deposit fees."}, {"id": 103, "reviewer_name": "Guest #103", "rating": 5, "review_text": "Phòng view đẹp; dịch vụ tốt; nhân viên thân thiện, nhiệt tình. Sẽ quay lại vào lần đến Saigon tiếp theo", "sentiment": "Positive", "pain_point_flag": false, "category": "Boutique_Experience", "summary": "Good room view and friendly, helpful staff."}, {"id": 104, "reviewer_name": "Guest #104", "rating": 5, "review_text": "Mình có 2 đêm ở đây, đều đến muộn (11pm) và đi sớm (6am), với 2 trải nghiệm hoàn toàn khác biệt. Đêm đầu (10/7) mọi thứ hoàn hảo, bạn lễ tân cực kỳ support, dù đã muộn. Buổi thứ 2 (12/7), trải nghiệm hpanf toàn khác, bạn lễ tân đã làm mất …", "sentiment": "Negative", "pain_point_flag": true, "category": "Staff_Service", "summary": "Inconsistent service quality; staff lost items during the second stay."}, {"id": 105, "reviewer_name": "Guest #105", "rating": 5, "review_text": "Căn Studio Loft rất rộng rãi thoait mái cho gia đình, có khu vực bếp nhỏ nên mình có thể hâm đồ ăn cho e bé nhà mình thường xuyên. Buffet sáng trên tầng thượng có nhiều món và cảnh đẹp! nói chung mình rất hài lòng!", "sentiment": "Positive", "pain_point_flag": false, "category": "Room_Amenities", "summary": "Spacious studio loft with kitchen facilities and a great rooftop breakfast."}, {"id": 106, "reviewer_name": "Guest #106", "rating": 5, "review_text": "Nhân viên chu đáo nhiệt tình dễ thương, phòng đẹp sạch sẽ. Không gian yên tĩnh, lần sau sẽ quay lại.", "sentiment": "Positive", "pain_point_flag": false, "category": "Cleanliness", "summary": "Attentive staff, clean rooms, and a quiet atmosphere."}, {"id": 107, "reviewer_name": "Guest #107", "rating": 5, "review_text": "Mình ở đúng ngày 20/10 nên được tặng bánh cupcake rất dễ thương hehe. Nhân viên thân thiện, check-in khá nhanh. Phòng rộng, đầy đủ tiện nghi và có view đẹp.", "sentiment": "Positive", "pain_point_flag": false, "category": "Boutique_Experience", "summary": "Thoughtful gesture with cupcake gift, fast check-in, and well-equipped room."}, {"id": 108, "reviewer_name": "Guest #108", "rating": 5, "review_text": "Oakwood Hotel & Apartments Saigion, Ung Văn Khiêm, Bình Thạnh,tphcm.\n\nTọa lạc tại vị trí nổi bật tại Quận Bình Thạnh, bên cạnh dòng sông Sài Gòn lịch …", "sentiment": "Neutral", "pain_point_flag": false, "category": "Location_and_Access", "summary": "General description of the hotel's location by the Saigon River."}, {"id": 109, "reviewer_name": "Guest #109", "rating": 5, "review_text": "Oakwood Hotel & Apartments Saigon là lựa chọn phù hợp cho những ai tìm kiếm không gian rộng rãi, tiện nghi hiện đại và dịch vụ chuyên nghiệp.", "sentiment": "Positive", "pain_point_flag": false, "category": "Others", "summary": "General recommendation for spacious, modern, and professional accommodation."}, {"id": 110, "reviewer_name": "Guest #110", "rating": 5, "review_text": "Các bạn lễ tân rất nhiệt tình và hiếu khách. Khách sạn ở vị trí thuận tiện gần trung tâm. Rất phù hợp để chọn làm nơi nghỉ ngơi khi công tác ở Sài Gòn. Sẽ quay lại vào các dịp tiếp theo", "sentiment": "Positive", "pain_point_flag": false, "category": "Location_and_Access", "summary": "Helpful staff and convenient location suitable for business trips."}, {"id": 111, "reviewer_name": "Guest #111", "rating": 5, "review_text": "Mình đã có một trải nghiệm tuyệt vời tại đây, nhân viên thân thiện và luôn hỗ trợ mình xách hành lý. Phòng rất rộng rãi, mình chưa ở khách sạn nào mà phòng rộng vậy luôn! Ks cũng có dvu xe bus miễn phí tới quận 1 nữa. Nói chung là với giá phòng và dịch vụ như vậy thì hơn cả mong đợi của mình! Sẽ quay lại trong dịp tới!!", "sentiment": "Positive", "pain_point_flag": false, "category": "Boutique_Experience", "summary": "Excellent experience with spacious rooms, friendly staff, and convenient free shuttle service."}, {"id": 112, "reviewer_name": "Guest #112", "rating": 5, "review_text": "Thuận tiện đi lại, không gian ấm cúng, view đẹp, nhân viên thân thiện,  phòng sạch sẽ", "sentiment": "Positive", "pain_point_flag": false, "category": "Location_and_Access", "summary": "Convenient location, cozy atmosphere, nice view, and clean rooms."}, {"id": 113, "reviewer_name": "Guest #113", "rating": 5, "review_text": "tôi đã có trải nghiệm tuyệt vời tại đây vào cuối tuần , khách sạn có view đẹp , nhân viên thân thiện dễ thương , tôi sẽ quay lại đây cho lần kỳ nghỉ tiếp theo", "sentiment": "Positive", "pain_point_flag": false, "category": "Boutique_Experience", "summary": "Great weekend stay with beautiful views and friendly staff."}, {"id": 114, "reviewer_name": "Guest #114", "rating": 5, "review_text": "Mỗi tháng tôi đều đi công tác tại Sài Gòn, và thường ở lại 3-7 ngày cho mỗi chuyến đi. Đây là lần đầu tôi viết đánh giá về 1 khách sạn, bởi vì đây là khách sạn đầu tiên mà tôi thực sự muốn review. …", "sentiment": "Positive", "pain_point_flag": false, "category": "Boutique_Experience", "summary": "First time writing a review for a hotel because it was such a standout experience."}, {"id": 115, "reviewer_name": "Guest #115", "rating": 5, "review_text": "Trải nghiệm tuyệt vời khi đến đây, phòng rộng rãi thoải mái, nhân viên khách sạn nhiệt tình thân thiện, sẽ quay lại trong thời gian tới", "sentiment": "Positive", "pain_point_flag": false, "category": "Room_Amenities", "summary": "Great experience with spacious, comfortable rooms and enthusiastic staff."}, {"id": 116, "reviewer_name": "Guest #116", "rating": 5, "review_text": "Mình đã có trải nghiệm rất tốt và thoải mái tại Oakwood. Phòng rộng, ks thiết kế đẹp so với giá tiền quá hợp lý. Vị trí hơi xa trung tâm nh bắt xe khá nhanh, ko bất tiện gì. Ấn tượng nhất anh nhân viên tiền sảnh tên Nguyên rất nhiệt tình, vui vẻ, dễ thương. Vote 5*", "sentiment": "Positive", "pain_point_flag": false, "category": "Location_and_Access", "summary": "Very good experience, spacious room, and great value, despite being slightly far from the center."}, {"id": 117, "reviewer_name": "Guest #117", "rating": 5, "review_text": "Phòng rộng, sạch, nhân viên thân thiện & nhiệt tình. Ks có tv lớn xem world cup ở sảnh và có snack nhẹ luôn, nói chung mình rất hài lòng.", "sentiment": "Positive", "pain_point_flag": false, "category": "Room_Amenities", "summary": "Spacious, clean rooms with friendly staff and thoughtful lobby amenities."}, {"id": 118, "reviewer_name": "Guest #118", "rating": 5, "review_text": "Khách sạn tuyệt vời, phòng đẹp view đẹp phòng rộng rãi, giường và gối rộng rãi thơm mềm, nhân dễ thương", "sentiment": "Positive", "pain_point_flag": false, "category": "Room_Amenities", "summary": "Excellent hotel with beautiful views, spacious rooms, and comfortable bedding."}, {"id": 119, "reviewer_name": "Guest #119", "rating": 5, "review_text": "Phòng sạch sẽ, lễ tân lễ phép vui vẻ tuy nhiều lúc mình hỏi 1 số thứ lúc hơi khuya. Nói chung mọi người yên tâm sử dụng dịch vụ ở đây", "sentiment": "Positive", "pain_point_flag": false, "category": "Cleanliness", "summary": "Clean rooms and polite, helpful reception staff even late at night."}, {"id": 120, "reviewer_name": "Guest #120", "rating": 5, "review_text": "Một trải nghiệm tuyệt vời, nhân viên thân thiện.\nKhách sạn đẹp vị trí thuận tiện.\nChắc chắn sẽ quay lại.", "sentiment": "Positive", "pain_point_flag": false, "category": "Boutique_Experience", "summary": "Great experience, beautiful hotel, and convenient location."}, {"id": 121, "reviewer_name": "Guest #121", "rating": 5, "review_text": "Phòng rộng rãi, thoáng mát sạch sẽ, đầy đủ tiện nghi cần thiết như bếp, tivi, bồn tắm, quầy bar.... Rất phù hợp cho cả đi công tác và du lịch với con nhỏ. …", "sentiment": "Positive", "pain_point_flag": false, "category": "Room_Amenities", "summary": "Phòng rộng rãi, sạch sẽ và đầy đủ tiện nghi."}, {"id": 122, "reviewer_name": "Guest #122", "rating": 5, "review_text": "Mọi điểm mình đều thấy rất tốt. Từ nhân viên dưới sảnh rất chuyên nghiệp hỗ trợ vali mang lên phòng. Khi tới cọc 1triệu mình thấy ok. Mình đi intercon toàn cọc 5tr. Phòng ốc sạch và thơm. Đồ supplies của hãng La Bottega 5* rất tốt. Ăn sáng view đẹp. Đồ ăn đơn giản nhưng rất okila. Mình sẽ quay lại lần tới", "sentiment": "Positive", "pain_point_flag": false, "category": "Staff_Service", "summary": "Dịch vụ chuyên nghiệp, phòng sạch thơm và đồ dùng chất lượng."}, {"id": 123, "reviewer_name": "Guest #123", "rating": 5, "review_text": "Căn hộ studio rộng rãi và tiện nghi.\nGiá cả tốt so với cơ sở vật chất.\nSảnh có quầy cà phê đẹp. …", "sentiment": "Positive", "pain_point_flag": false, "category": "Pricing_and_Fees", "summary": "Căn hộ tiện nghi với giá cả hợp lý."}, {"id": 124, "reviewer_name": "Guest #124", "rating": 5, "review_text": "Lần đầu mình trải nghiệm ở đây, không gian phòng rộng rãi, đầy đủ tiện nghi. Các bạn nhân viên rất dễ thương và nhiệt tìnhhh", "sentiment": "Positive", "pain_point_flag": false, "category": "Staff_Service", "summary": "Không gian phòng tốt và nhân viên nhiệt tình."}, {"id": 125, "reviewer_name": "Guest #125", "rating": 5, "review_text": "Phòng ốc rộng rãi, yên tĩnh. Có nhà hàng ăn sáng ok. Trải nghiệm tuyệt vời cho 02 người", "sentiment": "Positive", "pain_point_flag": false, "category": "Noise_and_Quietness", "summary": "Phòng rộng rãi, yên tĩnh và có nhà hàng tốt."}, {"id": 126, "reviewer_name": "Guest #126", "rating": 5, "review_text": "Nhân viên nhiệt tình đặc biệt có bạn nguyên nv sảnh bê hành lý rất nhiệt tình\nKhách sạn sạch sẽ sảnh đẹp\nNhược điểm tivi đời cũ không phải smart tivi\nWifi kém", "sentiment": "Negative", "pain_point_flag": true, "category": "Room_Amenities", "summary": "Nhân viên nhiệt tình nhưng tivi đời cũ và wifi kém."}, {"id": 127, "reviewer_name": "Guest #127", "rating": 5, "review_text": "Khách sạn quá tuyêt vời . Nhăn vien thân thien dễ thuong, nhiêt tình, phòng sach  thơm. View đẹp", "sentiment": "Positive", "pain_point_flag": false, "category": "Staff_Service", "summary": "Khách sạn tuyệt vời, nhân viên thân thiện và phòng sạch đẹp."}, {"id": 128, "reviewer_name": "Guest #128", "rating": 5, "review_text": "Một trải nghiệm tuyệt vời tại khách sạn, nhân viên rất tốt, chuyên nghiệp", "sentiment": "Positive", "pain_point_flag": false, "category": "Staff_Service", "summary": "Trải nghiệm tuyệt vời với đội ngũ nhân viên chuyên nghiệp."}, {"id": 129, "reviewer_name": "Guest #129", "rating": 5, "review_text": "Phòng được dọn dẹp gọn gàng, sạch sẽ. Các phòng sẽ được dọn dẹp hàng ngày.\nNhân viên làm thủ tục check in check out nhanh chóng.", "sentiment": "Positive", "pain_point_flag": false, "category": "Cleanliness", "summary": "Phòng sạch sẽ và thủ tục check-in/out nhanh chóng."}, {"id": 130, "reviewer_name": "Guest #130", "rating": 5, "review_text": "Vô tình thấy ks trên maps, đọc bình luận thấy mn rì viu tốt, lại gần landmark nên book thử\nPhòng căn hộ đầy đủ bếp núc, tiện nghi , bồn tắm, view đẹp, giường nằm rất thích …", "sentiment": "Positive", "pain_point_flag": false, "category": "Room_Amenities", "summary": "Phòng căn hộ đầy đủ tiện nghi và view đẹp."}, {"id": 131, "reviewer_name": "Guest #131", "rating": 5, "review_text": "Nhân viên thân thiện 💕. Phòng sạch sẽ, thoáng đãng. View có thể ngắm pháo hoa …", "sentiment": "Positive", "pain_point_flag": false, "category": "Staff_Service", "summary": "Friendly staff, clean room, and great view."}, {"id": 132, "reviewer_name": "Guest #132", "rating": 5, "review_text": "bên ngoài ko đẹp mắt nhưng bên trong sạch sẽ và thơm tho, thiết kế phòng cũng rất khoa học, giường thỏa mái êm ái", "sentiment": "Positive", "pain_point_flag": false, "category": "Room_Amenities", "summary": "Clean, fragrant, well-designed room with a comfortable bed."}, {"id": 133, "reviewer_name": "Guest #133", "rating": 5, "review_text": "Hài lòng. Phòng rộng, sạch sẽ và đẹp, đặc biệt là khu vực sảnh. Nhân viên thân thiện và hỗ trợ khách mang hành lí lên phòng. Ks gần khu vực Thảo Điền và Quận 1 nên tiện di chuyển.", "sentiment": "Positive", "pain_point_flag": false, "category": "Staff_Service", "summary": "Spacious, clean, and beautiful room with helpful staff and convenient location."}, {"id": 134, "reviewer_name": "Guest #134", "rating": 5, "review_text": "Phòng ốc sạch sẽ, vị trí thuận lợi, nhân viên nhiệt tình vui vẻ mình sẽ quay lại", "sentiment": "Positive", "pain_point_flag": false, "category": "Cleanliness", "summary": "Clean room, convenient location, and enthusiastic staff."}, {"id": 135, "reviewer_name": "Guest #135", "rating": 5, "review_text": "Lễ tân thân thiện, phục vụ tốt\nPhòng sạch sẽ, thoáng mát\nLần sau mình sẽ tiếp tục sử dụng dịch vụ của Oakwood", "sentiment": "Positive", "pain_point_flag": false, "category": "Staff_Service", "summary": "Friendly reception, clean room, and good service."}, {"id": 136, "reviewer_name": "Guest #136", "rating": 5, "review_text": "Rất tuyệtt , một nơi lý tưởng", "sentiment": "Positive", "pain_point_flag": false, "category": "Boutique_Experience", "summary": "An ideal and excellent place."}, {"id": 137, "reviewer_name": "Guest #137", "rating": 5, "review_text": "Phòng quá đẹp, cực kỳ sạch sẽ.\nCác bạn nhân viên quá nhiệt tình luôn. Cảm ơn bạn Nguyên và các bạn lễ tân. Rất ok luôn.", "sentiment": "Positive", "pain_point_flag": false, "category": "Staff_Service", "summary": "Beautiful, clean room with very enthusiastic staff."}, {"id": 138, "reviewer_name": "Guest #138", "rating": 5, "review_text": "Phòng rộng rãi, view sông khá đẹp\nNhân viên thân thiện nhiệt tình\nAnh nhân viên hành lý tên Nguyên rất nhiệt tình hỗ trợ", "sentiment": "Positive", "pain_point_flag": false, "category": "Room_Amenities", "summary": "Spacious room with a nice river view and helpful staff."}, {"id": 139, "reviewer_name": "Guest #139", "rating": 5, "review_text": "Nhân viên thân thiện, dễ thương. Ở sảnh và phòng mùi rất thơm dễ chịu.", "sentiment": "Positive", "pain_point_flag": false, "category": "Staff_Service", "summary": "Friendly staff and pleasant scent in the lobby and room."}, {"id": 140, "reviewer_name": "Guest #140", "rating": 5, "review_text": "5 sao", "sentiment": "Positive", "pain_point_flag": false, "category": "Others", "summary": "Five-star experience."}, {"id": 141, "reviewer_name": "Guest #141", "rating": 5, "review_text": "Một nơi quá tuyệt vời để nghỉ dưỡng, rất đáng để mọi người lưu trú khi đến TP.HCM", "sentiment": "Positive", "pain_point_flag": false, "category": "Boutique_Experience", "summary": "A wonderful place to stay in Ho Chi Minh City."}, {"id": 142, "reviewer_name": "Guest #142", "rating": 5, "review_text": "Nhân viên dễ thương và thân thiện, phòng ốc sạch sẽ và rộng rãi.", "sentiment": "Positive", "pain_point_flag": false, "category": "Staff_Service", "summary": "Friendly staff and clean, spacious rooms."}, {"id": 143, "reviewer_name": "Guest #143", "rating": 5, "review_text": "Phòng đẹp, thoải mái, nhân viên cũng nhiệt tình nửa.", "sentiment": "Positive", "pain_point_flag": false, "category": "Room_Amenities", "summary": "Beautiful, comfortable rooms with enthusiastic staff."}, {"id": 144, "reviewer_name": "Guest #144", "rating": 5, "review_text": "Phòng rất thoải mái.", "sentiment": "Positive", "pain_point_flag": false, "category": "Room_Amenities", "summary": "The room is very comfortable."}, {"id": 145, "reviewer_name": "Guest #145", "rating": 5, "review_text": "Một trải nghiệm tuyệt vời. Nhân viên phục vụ rất tốt, luôn để ý từng yêu cầu của khách hàng.", "sentiment": "Positive", "pain_point_flag": false, "category": "Staff_Service", "summary": "Excellent service and attentive staff."}, {"id": 146, "reviewer_name": "Guest #146", "rating": 5, "review_text": "Khách sạn đẹp, dịch vụ tốt, nhân viên thân thiện với khách hàng", "sentiment": "Positive", "pain_point_flag": false, "category": "Boutique_Experience", "summary": "Beautiful hotel with good service and friendly staff."}, {"id": 147, "reviewer_name": "Guest #147", "rating": 5, "review_text": "Dọn phòng ko kỹ.", "sentiment": "Negative", "pain_point_flag": true, "category": "Cleanliness", "summary": "The room cleaning was not thorough."}, {"id": 148, "reviewer_name": "Guest #148", "rating": 5, "review_text": "ổn áp, phòng có view đẹp, có nhiều dịch vụ cần", "sentiment": "Positive", "pain_point_flag": false, "category": "Room_Amenities", "summary": "Good experience with a nice view and necessary services."}, {"id": 149, "reviewer_name": "Guest #149", "rating": 5, "review_text": "khách sạn ok quá chừng, nv nhiệt tình, có cơ hội mình sẽ ghé tiếp", "sentiment": "Positive", "pain_point_flag": false, "category": "Boutique_Experience", "summary": "Great hotel with enthusiastic staff, would return."}, {"id": 150, "reviewer_name": "Guest #150", "rating": 5, "review_text": "nhân viên thân thiện, View Lanmark xịn, Người yêu mình thích ở đây,....", "sentiment": "Positive", "pain_point_flag": false, "category": "Room_Amenities", "summary": "Friendly staff and a great view of Landmark."}, {"id": 151, "reviewer_name": "Guest #151", "rating": 5, "review_text": "Phòng sạch sẽ, nhân viên thân thiện và nhiệt tình.", "sentiment": "Positive", "pain_point_flag": false, "category": "Cleanliness", "summary": "Phòng sạch sẽ, nhân viên thân thiện."}, {"id": 152, "reviewer_name": "Guest #152", "rating": 5, "review_text": "Dịch vụ rất tốt. Các bạn nhân viên rất lễ phép và nhiệt tình", "sentiment": "Positive", "pain_point_flag": false, "category": "Staff_Service", "summary": "Dịch vụ tốt, nhân viên lễ phép."}, {"id": 153, "reviewer_name": "Guest #153", "rating": 5, "review_text": "Nhiệt tình hỗ trợ, phòng sạch, thoáng mát, quản lí đẹp trai", "sentiment": "Positive", "pain_point_flag": false, "category": "Staff_Service", "summary": "Nhân viên nhiệt tình, phòng sạch."}, {"id": 154, "reviewer_name": "Guest #154", "rating": 5, "review_text": "Phòng rộng rãi đa dạng, dịch vụ nhanh và thân thiện", "sentiment": "Positive", "pain_point_flag": false, "category": "Room_Amenities", "summary": "Phòng rộng, dịch vụ nhanh."}, {"id": 155, "reviewer_name": "Guest #155", "rating": 5, "review_text": "Rất tệ. Lừa đảo. Đặt phòng trên áp thì đưa hình phòng sạch sẽ điều hoà. Nhưng khi đến nhận thì kh phải là phòng mà chỉ quây 1 tấm rèm vải cho 1 quạt con.", "sentiment": "Negative", "pain_point_flag": true, "category": "Others", "summary": "Phòng thực tế không giống quảng cáo, điều kiện tồi tệ."}, {"id": 156, "reviewer_name": "Guest #156", "rating": 5, "review_text": "thuê phòng thanh toán lúc 14h tới nhận phòng thì khoá cửa số điện thoại gọi không được.giờ ngồi ở ngoài đường", "sentiment": "Negative", "pain_point_flag": true, "category": "Staff_Service", "summary": "Không thể liên lạc với khách sạn khi đến nhận phòng."}, {"id": 157, "reviewer_name": "Guest #157", "rating": 5, "review_text": "Chỉ 1 sao", "sentiment": "Negative", "pain_point_flag": true, "category": "Others", "summary": "Đánh giá thấp."}, {"id": 158, "reviewer_name": "Guest #158", "rating": 5, "review_text": "Phòng cũng tạm ổn. Phù hợp cho 2 người thôi. Gia đình 4 người hơi chật. Chất lượng cho 3/5 sao.", "sentiment": "Neutral", "pain_point_flag": false, "category": "Room_Amenities", "summary": "Phòng hơi chật cho gia đình, chất lượng trung bình."}, {"id": 159, "reviewer_name": "Guest #159", "rating": 5, "review_text": "Không xứng với giá 500k ngày. Phòng dây điện máy nóng lạnh hở. Nhìn nguy hiểm.", "sentiment": "Negative", "pain_point_flag": true, "category": "Pricing_and_Fees", "summary": "Giá cao so với chất lượng, cơ sở vật chất nguy hiểm."}, {"id": 160, "reviewer_name": "Guest #160", "rating": 5, "review_text": "Tạm được.", "sentiment": "Neutral", "pain_point_flag": false, "category": "Others", "summary": "Trải nghiệm tạm được."}, {"id": 161, "reviewer_name": "Guest #161", "rating": 5, "review_text": "Khách sạn tốt và phục vụ thân thiện, nhưng vị trí không thuận lợi. Khu vực này khá nghèo và bạn có nguy cơ bị cướp. Tốt nhất nên đi taxi để di chuyển.", "sentiment": "Negative", "pain_point_flag": true, "category": "Location_and_Access", "summary": "Good service but poor location with safety concerns."}, {"id": 162, "reviewer_name": "Guest #162", "rating": 5, "review_text": "Được rồi", "sentiment": "Neutral", "pain_point_flag": false, "category": "None", "summary": "Average experience."}, {"id": 163, "reviewer_name": "Guest #163", "rating": 5, "review_text": "Phòng tương đối sạch - giá cả bình dân với khu vực", "sentiment": "Positive", "pain_point_flag": false, "category": "Cleanliness", "summary": "Clean room and affordable price."}, {"id": 164, "reviewer_name": "Guest #164", "rating": 5, "review_text": "Nha nghi thoai mai, co chu than thien", "sentiment": "Positive", "pain_point_flag": false, "category": "Boutique_Experience", "summary": "Comfortable stay with friendly owner."}, {"id": 165, "reviewer_name": "Guest #165", "rating": 5, "review_text": "Ks 0 có nơi đổ xe ôtô đường nhỏ", "sentiment": "Negative", "pain_point_flag": true, "category": "Location_and_Access", "summary": "Lack of parking space and narrow street access."}, {"id": 166, "reviewer_name": "Guest #166", "rating": 5, "review_text": "Khách sạn nằm ở quận Bình Thạnh, giáp quận 1. Khách sạn mới và nội thất sạch sẽ. Nhân viên rất thân thiện. Có chợ gần đó nên bạn sẽ không gặp khó khăn gì trong việc tìm đồ ăn. Cấm hút thuốc trong khách sạn, nhưng bạn có thể hút thuốc trên …", "sentiment": "Positive", "pain_point_flag": false, "category": "Cleanliness", "summary": "New, clean hotel with friendly staff and convenient location."}, {"id": 167, "reviewer_name": "Guest #167", "rating": 5, "review_text": "Tốt :)", "sentiment": "Positive", "pain_point_flag": false, "category": "None", "summary": "Good experience."}, {"id": 168, "reviewer_name": "Guest #168", "rating": 5, "review_text": "phòng sạch sẽ", "sentiment": "Positive", "pain_point_flag": false, "category": "Cleanliness", "summary": "The room is clean."}, {"id": 169, "reviewer_name": "Guest #169", "rating": 5, "review_text": "Phòng ngủ đầy đủ tiện nghi, sạch sẽ, yên tĩnh.\nChủ nhà rất thân thiện và nhiệt tình. Hơn 3 tuần ở đây tôi có cảm giác như được ở trong chính ngôi nhà của mình. …", "sentiment": "Positive", "pain_point_flag": false, "category": "Room_Amenities", "summary": "Well-equipped, clean, quiet room with a very friendly host."}, {"id": 170, "reviewer_name": "Guest #170", "rating": 5, "review_text": "Phòng ổn,giá chấp nhận được, chị chủ nhẹ nhàng thoải mái. ở vị trí khá trung tâm dễ dàng di chuyển. Đi bộ 50m là có siêu thị, hiệu thuốc, ăn uống. Các tiệm thuê xe máy cũng ở loanh quanh và giao xe tận nơi. …", "sentiment": "Positive", "pain_point_flag": false, "category": "Location_and_Access", "summary": "Good room, reasonable price, and convenient central location."}, {"id": 171, "reviewer_name": "Guest #171", "rating": 5, "review_text": "Hotel có vị trí đúng chỗ mình cần nên ở, phòng khá bình thường nên ko có ý kiến gì", "sentiment": "Neutral", "pain_point_flag": false, "category": "Location_and_Access", "summary": "The location was convenient, but the room was average."}, {"id": 172, "reviewer_name": "Guest #172", "rating": 5, "review_text": "Đã trải nghiệm , dịch vụ tốt!\nLần sau sẽ quay lại", "sentiment": "Positive", "pain_point_flag": false, "category": "Staff_Service", "summary": "Good service and would return."}, {"id": 173, "reviewer_name": "Guest #173", "rating": 5, "review_text": "Phòng ok", "sentiment": "Positive", "pain_point_flag": false, "category": "Room_Amenities", "summary": "The room was acceptable."}, {"id": 174, "reviewer_name": "Guest #174", "rating": 5, "review_text": "Tôi không hiểu sao lại được đánh giá trên 4 sao. Chúng tôi đã đặt phòng đôi. Phòng tắm đầy nấm mốc. Trần nhà, các góc xung quanh bồn rửa và vòi sen đều bị ảnh hưởng nặng. …", "sentiment": "Negative", "pain_point_flag": true, "category": "Cleanliness", "summary": "Bathroom was full of mold on the ceiling and around the sink and shower."}, {"id": 175, "reviewer_name": "Guest #175", "rating": 5, "review_text": "Chúng tôi đặt phòng ở nhà nghỉ này vì họ hứa sẽ cho chúng tôi sử dụng phòng tắm sau khi trả phòng qua WhatsApp, vì chuyến bay của chúng tôi đến tận tối muộn. Khi chúng tôi hỏi vào ngày khởi hành, chúng tôi được thông báo là không thể tắm. Phòng không được sạch sẽ lắm. Có vẻ như họ chỉ thay ga trải giường. Phòng tắm thì bị mốc.", "sentiment": "Negative", "pain_point_flag": true, "category": "Staff_Service", "summary": "Staff failed to honor a promise regarding shower access, and the room was unclean with mold in the bathroom."}, {"id": 176, "reviewer_name": "Guest #176", "rating": 5, "review_text": "Tôi nghĩ nơi này cuối cùng sẽ trở thành ký túc xá chỉ dành cho nữ, bởi vì nam giới không được chào đón ở các khu vực chung, không được cung cấp quạt, hoặc không được đối xử tôn trọng chút nào bởi các nữ sinh, những người đang dần chiếm lĩnh toàn bộ nơi này theo ý thích của họ.", "sentiment": "Negative", "pain_point_flag": true, "category": "Boutique_Experience", "summary": "Complaints about discriminatory treatment and lack of respect towards male guests."}, {"id": 177, "reviewer_name": "Guest #177", "rating": 5, "review_text": "Trong phòng hỗn hợp, điều hòa không lạnh, phòng tắm bị ngập nước, và cả phòng rất ẩm thấp. Ngay cả sau khi báo cáo, vấn đề vẫn không được giải quyết. Tôi đã đặt hai đêm, nhưng tôi không thể chịu đựng được và đã rời đi ngay ngày đầu tiên! …", "sentiment": "Negative", "pain_point_flag": true, "category": "Room_Amenities", "summary": "Poor air conditioning, flooded bathroom, and high humidity; issues were not resolved by staff."}, {"id": 178, "reviewer_name": "Guest #178", "rating": 5, "review_text": "Tôi ở lại đây trong một chuyến đi ngắn cuối tuần, đến muộn (~8 giờ tối) vào thứ Sáu và rời đi sớm (~6/7 giờ sáng) vào thứ Hai. Vì đây là chuyến đi ngắn ngày do tôi đến xem chung kết VCT Thái Bình Dương tại TP.HCM, nên vị trí chỗ ở rất …", "sentiment": "Neutral", "pain_point_flag": false, "category": "Location_and_Access", "summary": "The location was suitable for the guest's specific travel purpose."}, {"id": 179, "reviewer_name": "Guest #179", "rating": 5, "review_text": "Vị trí khách sạn khá xa trung tâm thành phố.\n\nMáy lạnh cực kỳ yếu; tôi vẫn đổ mồ hôi dù đã bật máy lạnh. …", "sentiment": "Negative", "pain_point_flag": true, "category": "Room_Amenities", "summary": "The location is far from the city center and the air conditioning is extremely weak."}, {"id": 180, "reviewer_name": "Guest #180", "rating": 5, "review_text": "Nhà nghỉ này có vẻ hướng đến khách lưu trú dài hạn hơn, nên khách ngắn hạn có thể cảm thấy hơi lạc lõng. Phòng tắm thì có thể sạch sẽ hơn. Tuy nhiên, họ có những chú mèo và một chú chó dễ thương.", "sentiment": "Neutral", "pain_point_flag": true, "category": "Others", "summary": "The place feels geared towards long-term guests; cleanliness could be improved, but the pets are a highlight."}, {"id": 181, "reviewer_name": "Guest #181", "rating": 5, "review_text": "Ký túc xá giá rẻ ở trung tâm thành phố. Chúng ta có thể ở với giá thấp bao gồm bữa sáng.", "sentiment": "Positive", "pain_point_flag": false, "category": "Pricing_and_Fees", "summary": "Affordable hostel in the city center with breakfast included."}, {"id": 182, "reviewer_name": "Guest #182", "rating": 5, "review_text": "Hơi lộn xộn và bừa bộn. Phòng tắm trong phòng hơi bẩn. Dịch vụ không được thân thiện lắm. Không có chỗ đậu xe máy. Mèo thì thân thiện và mềm mại.", "sentiment": "Negative", "pain_point_flag": true, "category": "Cleanliness", "summary": "Messy room, dirty bathroom, unfriendly service, and lack of parking."}, {"id": 183, "reviewer_name": "Guest #183", "rating": 5, "review_text": "Nhà nghỉ tốt, nhân viên thân thiện. Phải đi bộ một đoạn ngắn đến trung tâm thành phố nhưng như vậy sẽ thoải mái hơn.", "sentiment": "Positive", "pain_point_flag": false, "category": "Staff_Service", "summary": "Good hostel with friendly staff and a comfortable location."}, {"id": 184, "reviewer_name": "Guest #184", "rating": 5, "review_text": "Nếu bạn là người thích sự yên tĩnh, thì nhà nghỉ này là dành cho bạn. Nó chỉ cách quận 1 khoảng 10-15 phút nhưng rất đáng giá. Từ nhân viên đến bà chủ, tất cả đều vô cùng nhiệt tình và thân thiện.", "sentiment": "Positive", "pain_point_flag": false, "category": "Noise_and_Quietness", "summary": "Quiet location with very enthusiastic and friendly staff."}, {"id": 185, "reviewer_name": "Guest #185", "rating": 5, "review_text": "Sự đón tiếp từ chủ nhà rất nồng ấm và thân thiện. Nhà nghỉ có bầu không khí yên tĩnh và thoải mái, và những con vật nuôi của họ càng làm cho kỳ nghỉ thêm tuyệt vời — được nhìn thấy chúng khi đến nơi là sự chào đón tốt nhất mà một nhà nghỉ …", "sentiment": "Positive", "pain_point_flag": false, "category": "Boutique_Experience", "summary": "Warm welcome, quiet atmosphere, and lovely pets."}, {"id": 186, "reviewer_name": "Guest #186", "rating": 5, "review_text": "Cơ sở vật chất mới và giá cả rất hợp lý. Nhân viên nhiệt tình và hỗ trợ. Chú chó Shiba Inu cưng của họ, \"Omochi,\" rất đáng yêu và dễ thương. …", "sentiment": "Positive", "pain_point_flag": false, "category": "Room_Amenities", "summary": "New facilities, reasonable prices, and helpful staff."}, {"id": 187, "reviewer_name": "Guest #187", "rating": 5, "review_text": "Giá cả cực kỳ hợp lý cho một phòng nghỉ ở thành phố lớn; phòng nhỏ nhưng đầy đủ tiện nghi. Nhân viên rất dễ thương và nhiệt tình giúp đỡ. Lưu ý rằng bữa sáng không bao gồm cà phê, nhưng điều đó sẽ không làm hỏng kỳ nghỉ của bạn 😉. …", "sentiment": "Positive", "pain_point_flag": false, "category": "Pricing_and_Fees", "summary": "Great value for money, small but well-equipped rooms with friendly staff."}, {"id": 188, "reviewer_name": "Guest #188", "rating": 5, "review_text": "Nhân viên thân thiện, nhiệt tình, chú chó vui tính, phòng riêng nhỏ nhưng sạch sẽ và thoải mái.", "sentiment": "Positive", "pain_point_flag": false, "category": "Cleanliness", "summary": "Friendly staff and clean, comfortable private rooms."}, {"id": 189, "reviewer_name": "Guest #189", "rating": 5, "review_text": "Tôi yêu bạn, Mochi. Bạn thật sự đáng yêu. Đúng vậy, tôi đặt vé đến nơi này chỉ để gặp hai người dễ thương này; Mochi & Gatsby. Nơi này cũng nằm ở một khu phố quyến rũ - nếu bạn thích người dân địa phương. Hãy sử dụng Google Maps và bạn có thể di chuyển nhanh chóng như người bản địa. Có trạm xe buýt công cộng gần đó.", "sentiment": "Positive", "pain_point_flag": false, "category": "Location_and_Access", "summary": "Charming neighborhood with easy access to public transport."}, {"id": 190, "reviewer_name": "Guest #190", "rating": 5, "review_text": "Tôi yêu thú cưng. Vị trí tốt và dễ dàng di chuyển. Nhân viên thân thiện. Cơ sở vật chất tốt.", "sentiment": "Positive", "pain_point_flag": false, "category": "Others", "summary": "Good location, friendly staff, and nice facilities."}, {"id": 191, "reviewer_name": "Guest #191", "rating": 5, "review_text": "Khách sạn nằm ở ngoại ô, nhưng có rất nhiều quán ăn gần đó! Có một khu chợ đêm nhỏ bán bánh tráng rất rẻ! Ngoài ra còn có một phố bar ​​và một phố nhà hàng Nhật Bản, khá độc đáo! Gần đó cũng có nhiều quán cà phê, tuy nhiên đồ uống hơi đắt! …", "sentiment": "Positive", "pain_point_flag": true, "category": "Pricing_and_Fees", "summary": "Great location with many dining options, but drinks are expensive."}, {"id": 192, "reviewer_name": "Guest #192", "rating": 5, "review_text": "Khách sạn này khá tốt để ở một đêm, nhưng nếu bạn muốn ở nhiều ngày hơn thì tôi nghĩ nó không tiện lắm. Có rất nhiều mèo trong sảnh khách sạn và nếu bạn bị dị ứng thì hãy cẩn thận vì chúng đến và ngồi khắp nơi. Bữa sáng gồm trà và cháo yến …", "sentiment": "Negative", "pain_point_flag": true, "category": "Others", "summary": "Presence of many cats in the lobby may cause issues for guests with allergies."}, {"id": 193, "reviewer_name": "Guest #193", "rating": 5, "review_text": "Nơi nghỉ tuyệt vời để ở vài ngày. Rất hiện đại. Có vài thú cưng sống ở đó. Yên tĩnh và lịch sự vào ban đêm. Tôi thực sự thích nơi này - bạn được ăn sáng miễn phí đến 11 giờ ;) Hơi xa trung tâm một chút.", "sentiment": "Positive", "pain_point_flag": true, "category": "Location_and_Access", "summary": "Modern and quiet place with free breakfast, though slightly far from the center."}, {"id": 194, "reviewer_name": "Guest #194", "rating": 5, "review_text": "Chủ nhà (Coco) rất tốt bụng. Chó và mèo rất đáng yêu!!!! Tôi thích phòng ngủ tập thể chỉ dành cho nữ vì chỉ có 4 giường. Giường rất thoải mái. Phòng tắm riêng rất tuyệt! Phòng cũng có một cửa sổ lớn với dây leo xung quanh, rất quyến rũ và …", "sentiment": "Positive", "pain_point_flag": false, "category": "Boutique_Experience", "summary": "Very friendly host, comfortable beds, and charming room decor."}, {"id": 195, "reviewer_name": "Guest #195", "rating": 5, "review_text": "Nhà nghỉ rất tốt với môi trường sống tuyệt vời và khu vực sinh hoạt chung hoàn hảo để trò chuyện với những người đến từ khắp nơi trên thế giới. Rất nên chọn nếu bạn là người đi du lịch một mình và sẵn sàng chia sẻ câu chuyện của mình với người khác.", "sentiment": "Positive", "pain_point_flag": false, "category": "Boutique_Experience", "summary": "Great social environment for solo travelers."}, {"id": 196, "reviewer_name": "Guest #196", "rating": 5, "review_text": "Good good nice, phòng ok , có bầy tiếp tân 4 chân yêu lắm dth", "sentiment": "Positive", "pain_point_flag": false, "category": "Boutique_Experience", "summary": "Good room and lovely pets on-site."}, {"id": 197, "reviewer_name": "Guest #197", "rating": 5, "review_text": "Không gian ấm cúng cùng chó mèo, uống cafe chill. Gần dorm cái gì cũng có do mình không có thuê xe nên ngại di chuyển nhiều, từ nhà thuốc cửa hàng tiện lợi đến quán ăn. Chị chủ dễ thương, mấy bé lễ tân nhiệt tình giúp mình đỡ tốn thời gian suy nghĩ. 10₫ nha", "sentiment": "Positive", "pain_point_flag": false, "category": "Location_and_Access", "summary": "Cozy atmosphere with helpful staff and convenient access to amenities."}, {"id": 198, "reviewer_name": "Guest #198", "rating": 5, "review_text": "Phòng ok, giá ok. Nhân sự không được thân thiện lắm. Có mấy con chó mèo dễ thương", "sentiment": "Neutral", "pain_point_flag": true, "category": "Staff_Service", "summary": "Room and price are fine, but the staff is not very friendly."}, {"id": 199, "reviewer_name": "Guest #199", "rating": 5, "review_text": "Tiện nghi  ,sạch sẽ, giá hợp lý", "sentiment": "Positive", "pain_point_flag": false, "category": "Room_Amenities", "summary": "Clean, well-equipped, and reasonably priced."}, {"id": 200, "reviewer_name": "Guest #200", "rating": 5, "review_text": "Quá tuyệt vời", "sentiment": "Positive", "pain_point_flag": false, "category": "Others", "summary": "Excellent experience."}, {"id": 201, "reviewer_name": "Guest #201", "rating": 5, "review_text": "Mình có đặt phòng qua Traveloka và có yêu cầu xuất hoá đơn thì Traveloka không nhận xuất hoá đơn và bên khách sạn cũng từ chối.\n2 bên đùn đẩy cho nhau.\nCác bạn đặt phòng nên cân nhắc nếu phải xuất VAT như mình khi đặt qua Traveloka 😵‍💫\n\nPhòng nhỏ, vị trí vào ngõ bé.", "sentiment": "Negative", "pain_point_flag": true, "category": "Pricing_and_Fees", "summary": "Issues with VAT invoice issuance and small room size in a narrow alley."}, {"id": 202, "reviewer_name": "Guest #202", "rating": 5, "review_text": "Phòng thì cũ, giường thì dơ mà phục vụ và thái độ quá tệ", "sentiment": "Negative", "pain_point_flag": true, "category": "Cleanliness", "summary": "Dirty room, old facilities, and poor staff attitude."}, {"id": 203, "reviewer_name": "Guest #203", "rating": 5, "review_text": "Khách sạn sạch sẽ phòng ốc ổn\nNhân viên thân thiện\nMỗi tội bị mất đồ của mình …", "sentiment": "Negative", "pain_point_flag": true, "category": "Others", "summary": "Clean room and friendly staff, but personal belongings were stolen."}, {"id": 204, "reviewer_name": "Guest #204", "rating": 5, "review_text": "Bạn nam nhân ở quầy tiếp tân thái độ không tốt. Nói chuyện vô duyên. Khách đến mà hỏi “ có đi khách sạn nhiều chưa “ . Muốn đòi thêm tiền. Thái độ không tôn trọng khách.  (24/11 lúc 22:30 )", "sentiment": "Negative", "pain_point_flag": true, "category": "Staff_Service", "summary": "Receptionist had a rude attitude and attempted to solicit extra money."}, {"id": 205, "reviewer_name": "Guest #205", "rating": 5, "review_text": "DV tệ thông tin phòng ko rõ ràng", "sentiment": "Negative", "pain_point_flag": true, "category": "Staff_Service", "summary": "Poor service and unclear room information."}, {"id": 206, "reviewer_name": "Guest #206", "rating": 5, "review_text": "Nhân viên lễ tân thái độ với khách hàng", "sentiment": "Negative", "pain_point_flag": true, "category": "Staff_Service", "summary": "Receptionist had a bad attitude towards the customer."}, {"id": 207, "reviewer_name": "Guest #207", "rating": 5, "review_text": "Tôi đã ở lại khách sạn này một đêm vào tháng 11 năm 2025 và đó là một trải nghiệm RẤT TỆ, KINH KHỦNG. …", "sentiment": "Negative", "pain_point_flag": true, "category": "Others", "summary": "Overall terrible and horrible experience."}, {"id": 208, "reviewer_name": "Guest #208", "rating": 5, "review_text": "Tôi đã ở đây nhiều lần, và mỗi lần đều gặp phải một vấn đề khác nhau. Vị trí thì tuyệt vời, gần quán cà phê yêu thích của tôi, đó là một điểm cộng lớn nên tôi mới cho họ nhiều cơ hội như vậy. …", "sentiment": "Negative", "pain_point_flag": true, "category": "Others", "summary": "Great location but consistent issues across multiple stays."}, {"id": 209, "reviewer_name": "Guest #209", "rating": 5, "review_text": "Chính sách khách sạn cực kỳ cứng nhắc – Trải nghiệm đáng thất vọng\nTôi đã có một trải nghiệm rất khó chịu với khách sạn này do chính sách thiếu linh hoạt của họ. Ban đầu tôi đặt phòng 5 đêm qua Agoda, nhưng vô tình chọn 1 khách …", "sentiment": "Negative", "pain_point_flag": true, "category": "Pricing_and_Fees", "summary": "Extremely rigid hotel policies leading to a frustrating experience."}, {"id": 210, "reviewer_name": "Guest #210", "rating": 5, "review_text": "Được quảng cáo là khách sạn 4 sao. Thực chất nó chỉ là một tòa nhà căn hộ dịch vụ chứ không phải khách sạn đúng nghĩa. Ngay cả khách sạn 2 sao cũng có tiện nghi tốt hơn. Hình ảnh đăng tải không phản ánh thực tế. Bồn tắm Jacuzzi được quảng …", "sentiment": "Negative", "pain_point_flag": true, "category": "Boutique_Experience", "summary": "Misleading advertising regarding star rating and poor facility quality."}, {"id": 211, "reviewer_name": "Guest #211", "rating": 5, "review_text": "Máy lạnh không hoạt động nên phòng nóng như phòng xông hơi. Ga trải giường bẩn, đồ đạc của khách trước vẫn còn trong phòng khi chúng tôi đến - và chỗ đó đã kín phòng nên chúng tôi không thể có được một phòng sạch sẽ với máy lạnh hoạt động …", "sentiment": "Negative", "pain_point_flag": true, "category": "Cleanliness", "summary": "Broken air conditioning and dirty room with previous guest's belongings left behind."}, {"id": 212, "reviewer_name": "Guest #212", "rating": 5, "review_text": "Nơi này đã xuống cấp trầm trọng trong vài tuần qua. Thứ nhất, bạn sẽ không thể ngủ được ở đây vì tiếng ồn xây dựng kinh khủng nhất mà bạn từng nghe trong đời. Tiếng búa, tiếng khoan vang thẳng vào tai bạn lúc 7:30 sáng mỗi ngày, KỂ CẢ cuối …", "sentiment": "Negative", "pain_point_flag": true, "category": "Noise_and_Quietness", "summary": "Severe construction noise starting early in the morning."}, {"id": 213, "reviewer_name": "Guest #213", "rating": 5, "review_text": "Tôi đã ở lại một đêm vào tháng 11 năm 2025 và đó là một trải nghiệm RẤT TỆ, KINH KHỦNG tại khách sạn này (The Bloom Pham Viet Chanh).|1/ Phòng: Ga trải giường cũ và bẩn, sờn rách. Ga bọc nệm có mùi khó chịu và bị ố vàng.|2/ Dịch vụ: Tôi đã …", "sentiment": "Negative", "pain_point_flag": true, "category": "Cleanliness", "summary": "Dirty, torn, and smelly bed linens."}, {"id": 214, "reviewer_name": "Guest #214", "rating": 5, "review_text": "Dịch vụ tệ, giường cũ và bẩn.", "sentiment": "Negative", "pain_point_flag": true, "category": "Staff_Service", "summary": "Poor service and dirty, old beds."}, {"id": 215, "reviewer_name": "Guest #215", "rating": 5, "review_text": "Dịch vụ tệ hại. Tôi không hề làm bẩn ga trải giường, nhưng họ tính thêm 1,3 triệu VND với lý do tôi làm bẩn, nên tôi phải gọi cảnh sát để giải quyết. Hình như đây là vấn đề thường xuyên xảy ra. Mọi người hãy cẩn thận.", "sentiment": "Negative", "pain_point_flag": true, "category": "Pricing_and_Fees", "summary": "Unfair extra charges for alleged linen damage leading to police involvement."}, {"id": 216, "reviewer_name": "Guest #216", "rating": 5, "review_text": "Hãy tự chịu rủi ro khi ở khách sạn này! Nhân viên không hề đề cập đến việc có một cột phát sóng di động ngay bên ngoài cửa sổ phòng tôi, cách khoảng 3 mét.\nTôi yêu cầu đổi phòng, nhưng họ nói không thể và từ chối hoàn tiền nếu tôi hủy đặt phòng; tôi đã rời đi ngay lập tức mà không do dự. An toàn sức khỏe quan trọng hơn nhiều.", "sentiment": "Negative", "pain_point_flag": true, "category": "Others", "summary": "Safety concerns regarding a cell tower outside the window and poor customer service."}, {"id": 217, "reviewer_name": "Guest #217", "rating": 5, "review_text": "Tôi đã đặt hai phòng cho một người bạn và thanh toán trước. Vào ngày đến, họ nói rằng phòng đôi chỉ dành cho một người, và hai người sẽ phải trả thêm 1 triệu Đài tệ. Ban đầu bạn tôi muốn xem phòng, nghĩ rằng nếu được xem thì họ sẽ bị lừa …", "sentiment": "Negative", "pain_point_flag": true, "category": "Pricing_and_Fees", "summary": "Unexpected extra charges for additional guests despite prior booking."}, {"id": 218, "reviewer_name": "Guest #218", "rating": 5, "review_text": "Tôi đã ở đây vài lần rồi, tổng cộng 4 lần, có lần ngắn ngày và có lần dài ngày. Tôi thậm chí còn rủ bạn mình đặt phòng ở khách sạn này nữa. Trước đây ở đây không có vấn đề gì lớn. Gần nhiều nơi. Ví dụ, quận 1 và 2 chỉ cách đó 10 phút. Khu …", "sentiment": "Positive", "pain_point_flag": false, "category": "Location_and_Access", "summary": "Good location with convenient access to district 1 and 2."}, {"id": 219, "reviewer_name": "Guest #219", "rating": 5, "review_text": "Tôi từng rất yêu thích khách sạn này và hầu như cứ một đến hai tuần lại ở đây một lần. Nhưng gần đây nó khiến tôi rất thất vọng. Khách sạn không cho phép trả phòng muộn dù dịch vụ này được ghi trên ứng dụng khi tôi đặt phòng, WiFi thì kém, …", "sentiment": "Negative", "pain_point_flag": true, "category": "Staff_Service", "summary": "Refusal of late check-out and poor WiFi quality."}, {"id": 220, "reviewer_name": "Guest #220", "rating": 5, "review_text": "Khách sạn có vị trí khá tốt. Tuy nhiên, các phòng đã cũ và tường được sơn lại. Bữa sáng cũng khá sơ sài... Tôi không biết những đánh giá 5 sao đến từ đâu; tôi chắc chắn không thấy khách sạn này xứng đáng 5 sao. Nó chỉ là khách sạn 2 sao là …", "sentiment": "Negative", "pain_point_flag": true, "category": "Room_Amenities", "summary": "Old room conditions and poor breakfast quality."}, {"id": 221, "reviewer_name": "Guest #221", "rating": 5, "review_text": "Kỳ nghỉ này không tệ, căn hộ có thiết kế tuyệt vời và phòng cũng ổn. Tôi thích thiết kế và an ninh ở đây. Tuy nhiên, với cùng mức giá hoặc hơn một chút - với tư cách là khách du lịch, tôi khuyên nên ở trung tâm thành phố vì một vài lý do: …", "sentiment": "Neutral", "pain_point_flag": true, "category": "Location_and_Access", "summary": "The hotel design and security are good, but the location is inconvenient for tourists compared to the city center."}, {"id": 222, "reviewer_name": "Guest #222", "rating": 5, "review_text": "Ấn tượng ban đầu, phòng trông khá ổn nhưng khi quan sát kỹ hơn thì thấy không sạch sẽ. Nếu cởi giày ra, bạn sẽ cảm thấy những hạt bụi nhỏ trên sàn. Tôi còn tìm thấy một con bọ nhỏ trên giường và một con cá bạc cỡ trung bình trong bồn rửa …", "sentiment": "Negative", "pain_point_flag": true, "category": "Cleanliness", "summary": "The room was not clean, with dust on the floor, a bug on the bed, and a silverfish in the sink."}, {"id": 223, "reviewer_name": "Guest #223", "rating": 5, "review_text": "Cũng ổn.", "sentiment": "Neutral", "pain_point_flag": false, "category": "None", "summary": "The stay was acceptable."}, {"id": 224, "reviewer_name": "Guest #224", "rating": 5, "review_text": "Khách sạn không quảng cáo quá mức và trung thực về bản chất của mình; một khách sạn ba sao ổn định, phù hợp cho một hoặc hai đêm. Phòng rộng rãi và sạch sẽ, nhưng nệm giường tầng quá cứng, giống như ngủ trên những tấm bê tông. …", "sentiment": "Neutral", "pain_point_flag": true, "category": "Room_Amenities", "summary": "The room was clean and spacious, but the mattress was extremely hard."}, {"id": 225, "reviewer_name": "Guest #225", "rating": 5, "review_text": "Nhìn chung, trải nghiệm của tôi khá tích cực và nhân viên rất dễ chịu. Tuy nhiên, tôi chỉ cho 3 sao vì thấy họ không cung cấp đủ nước cam cho bữa sáng. Ngay cả khi yêu cầu thêm, ly chỉ được rót đầy một phần tư, chủ yếu là đá. Tôi rất thích uống nước cam mỗi sáng và sẽ đánh giá họ 5 sao nếu họ đảm bảo cung cấp đủ nước cam cho tôi.", "sentiment": "Neutral", "pain_point_flag": true, "category": "F_and_B", "summary": "Staff were pleasant, but the breakfast service was disappointing due to insufficient orange juice."}, {"id": 226, "reviewer_name": "Guest #226", "rating": 5, "review_text": "Nhân viên lễ tân và phục vụ bữa sáng rất nhiệt tình và thân thiện. | Thật không may, phòng của chúng tôi không giống như trong ảnh, và có một bức tường chắn trước cửa sổ. Một số bức tường trong phòng bị bẩn. | Tuy nhiên, khách sạn có vị trí tốt.", "sentiment": "Negative", "pain_point_flag": true, "category": "Room_Amenities", "summary": "Staff were friendly, but the room did not match the photos, had dirty walls, and an obstructed window view."}, {"id": 227, "reviewer_name": "Guest #227", "rating": 5, "review_text": "Nằm cách trung tâm Thành phố Hồ Chí Minh khoảng 30 phút đi bộ, phòng ở mức trung bình, hơi xuống cấp và không giống với ảnh trên Booking.com. Ban công không thể sử dụng và bị bỏ hoang, còn hồ bơi trên sân thượng không dùng được. Bữa sáng ngon và đầy đủ.", "sentiment": "Negative", "pain_point_flag": true, "category": "Room_Amenities", "summary": "The room was worn out, did not match online photos, and facilities like the balcony and pool were unusable."}, {"id": 228, "reviewer_name": "Guest #228", "rating": 5, "review_text": "Thật tiếc là những ngày tốt đẹp nhất đã qua rồi. Nhân viên rất tốt và nhiệt tình – phòng hơi cũ – bồn tắm nước nóng thì liên tục được “bảo trì” (chúng tôi không thấy ai sửa chữa nó trong suốt bốn ngày). …", "sentiment": "Negative", "pain_point_flag": true, "category": "Room_Amenities", "summary": "The hotel is aging, and the hot tub was out of service for the entire duration of the stay."}, {"id": 229, "reviewer_name": "Guest #229", "rating": 5, "review_text": "Phòng khách sạn hơi nhỏ so với giá tiền, và bữa sáng thì hạn chế, chỉ có 1-3 món. Các phòng cũng không cách âm tốt, nên những người làm việc bên ngoài có thể nghe thấy mọi thứ. Tiếng ồn bên ngoài đã khiến tôi không ngủ ngon giấc vào ngày hôm đó.", "sentiment": "Negative", "pain_point_flag": true, "category": "Noise_and_Quietness", "summary": "The room was small for the price, breakfast was limited, and poor soundproofing caused sleep disturbance."}, {"id": 230, "reviewer_name": "Guest #230", "rating": 5, "review_text": "Giá cả hợp lý. Tuy nhiên, một số phòng không có tầm nhìn. Thật đáng tiếc.", "sentiment": "Neutral", "pain_point_flag": true, "category": "Room_Amenities", "summary": "The price is reasonable, but the lack of a view in some rooms is disappointing."}, {"id": 231, "reviewer_name": "Guest #231", "rating": 5, "review_text": "Phòng ốc nhìn chung có hơi nhỏ, giá cả nhìn chung có hơi cao so với chất lượng phòng.\nCác bạn nhân viên nhiệt tình và hỗ trợ tốt.", "sentiment": "Negative", "pain_point_flag": true, "category": "Pricing_and_Fees", "summary": "Room size is small and price is high relative to quality, despite good staff service."}, {"id": 232, "reviewer_name": "Guest #232", "rating": 5, "review_text": "Nơi đây phù hợp với những người ngoại quốc đi công tác (nước ngoài)vì những tiện nghi và giá cả hợp lý OK", "sentiment": "Positive", "pain_point_flag": false, "category": "Pricing_and_Fees", "summary": "Reasonable pricing and amenities suitable for business travelers."}, {"id": 233, "reviewer_name": "Guest #233", "rating": 5, "review_text": "Tôi chọn nơi này chủ yếu vì có thể đậu xe máy ở đây. Ngoài ra, bồn tắm ngâm sâu rất hấp dẫn đối với tôi, vì tôi thích tắm bồn. Thêm nữa, khu vực này là một khu phố Nhật Bản khác ở Thành phố Hồ Chí Minh mà tôi chưa từng đến trước đây, vì vậy …", "sentiment": "Positive", "pain_point_flag": false, "category": "Room_Amenities", "summary": "Appreciated the parking availability, deep soaking tub, and the unique location."}, {"id": 234, "reviewer_name": "Guest #234", "rating": 5, "review_text": "Ý kiến ​​có thể khác nhau tùy thuộc vào phòng, nhưng dù sao đi nữa, ngay cả trong các phòng khách sạn cũng cần cải thiện đáng kể. Bữa sáng, hơn hết, rất đáng thất vọng - quá đơn giản. Những người khác cũng có ý kiến ​​tương tự, nhưng nếu …", "sentiment": "Negative", "pain_point_flag": true, "category": "F_and_B", "summary": "Room conditions need improvement and the breakfast was very disappointing and simple."}, {"id": 235, "reviewer_name": "Guest #235", "rating": 5, "review_text": "Đây là lần đầu tiên tôi ở tại quận Bình Thạnh. Đây là khu phố Nhật Bản. Xung quanh có rất nhiều nhà hàng Nhật. Có rất nhiều người Nhật. Phòng rộng rãi và bồn tắm lớn, rất tuyệt. Tôi chỉ ở một đêm nên không dùng bếp, nhưng nó được trang bị …", "sentiment": "Positive", "pain_point_flag": false, "category": "Room_Amenities", "summary": "Spacious room with a large bathtub and convenient location in the Japanese district."}];
+
+    let currentPage = 1;
+    const pageSize = 10;
+    let filteredReviews = [...REVIEWS_DATA];
+
+    // Initialize Page
+    document.addEventListener('DOMContentLoaded', () => {
+        initCharts();
+        renderActionItems();
+        populateCategoryFilter();
+        filterReviews();
+    });
+
+    // Initialize Charts
+    function initCharts() {
+        // Sentiment Donut Chart
+        const sentCtx = document.getElementById('sentimentChart').getContext('2d');
+        const sentData = REPORT_DATA.overall_sentiment_breakdown || { Positive: 0, Neutral: 0, Negative: 0 };
+        
+        new Chart(sentCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Tích cực (Positive)', 'Trung tính (Neutral)', 'Tiêu cực (Negative)'],
+                datasets: [{
+                    data: [sentData.Positive || 0, sentData.Neutral || 0, sentData.Negative || 0],
+                    backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'],
+                    borderWidth: 0,
+                    hoverOffset: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        align: 'center',
+                        labels: {
+                            color: '#cbd5e1',
+                            padding: 14,
+                            boxWidth: 10,
+                            usePointStyle: true,
+                            font: { family: 'Inter', size: 12, weight: '500' }
+                        }
+                    }
+                },
+                cutout: '65%'
+            }
+        });
+
+        // Category Horizontal Bar Chart
+        const catCtx = document.getElementById('categoryChart').getContext('2d');
+        const insights = REPORT_DATA.category_insights || [];
+        const catLabels = insights.map(i => i.category);
+        const catCounts = insights.map(i => i.complaint_count);
+
+        new Chart(catCtx, {
+            type: 'bar',
+            data: {
+                labels: catLabels,
+                datasets: [{
+                    label: 'Số lượng khiếu nại',
+                    data: catCounts,
+                    backgroundColor: 'rgba(99, 102, 241, 0.75)',
+                    borderColor: '#6366f1',
+                    borderWidth: 1,
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        ticks: { color: '#94a3b8' }
+                    },
+                    y: {
+                        grid: { display: false },
+                        ticks: { color: '#cbd5e1', font: { family: 'Inter', size: 11 } }
+                    }
+                }
+            }
+        });
+    }
+
+    // Render SLA Action Table
+    function renderActionItems() {
+        const tbody = document.getElementById('actionTableBody');
+        tbody.innerHTML = '';
+        const items = REPORT_DATA.action_items || [];
+
+        items.forEach(item => {
+            const tr = document.createElement('tr');
+            let badgeClass = item.priority === 'High' ? 'badge-high' : (item.priority === 'Medium' ? 'badge-medium' : 'badge-low');
+            let priorityIcon = item.priority === 'High' ? '🔴 High' : (item.priority === 'Medium' ? '🟡 Medium' : '🟢 Low');
+
+            tr.innerHTML = `
+                <td><span class="badge ${badgeClass}">${priorityIcon}</span></td>
+                <td><strong style="color: #f1f5f9;">${item.department}</strong></td>
+                <td>${item.issue}</td>
+                <td style="font-size: 0.8rem; color: #94a3b8;">${item.priority_rationale}</td>
+                <td style="color: #e2e8f0;">${item.action_plan}</td>
+                <td><span class="badge badge-cat">${item.timeline}</span></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Populate Category Dropdown Filter
+    function populateCategoryFilter() {
+        const select = document.getElementById('categoryFilter');
+        const categories = [...new Set(REVIEWS_DATA.map(r => r.category).filter(c => c && c !== 'None'))];
+        categories.forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat;
+            opt.textContent = cat;
+            select.appendChild(opt);
+        });
+    }
+
+    // Filter Reviews Data
+    function filterReviews() {
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const sent = document.getElementById('sentimentFilter').value;
+        const cat = document.getElementById('categoryFilter').value;
+
+        filteredReviews = REVIEWS_DATA.filter(r => {
+            const matchSearch = r.review_text.toLowerCase().includes(search) || (r.summary && r.summary.toLowerCase().includes(search));
+            const matchSent = sent === 'ALL' || r.sentiment === sent;
+            const matchCat = cat === 'ALL' || r.category === cat;
+            return matchSearch && matchSent && matchCat;
+        });
+
+        currentPage = 1;
+        renderReviewsTable();
+    }
+
+    // Render Paginated Reviews Table
+    function renderReviewsTable() {
+        const tbody = document.getElementById('reviewsTableBody');
+        tbody.innerHTML = '';
+
+        const start = (currentPage - 1) * pageSize;
+        const end = start + pageSize;
+        const pageItems = filteredReviews.slice(start, end);
+
+        if (pageItems.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">Không tìm thấy đánh giá phù hợp.</td></tr>';
+        } else {
+            pageItems.forEach(r => {
+                const tr = document.createElement('tr');
+                let sentBadge = r.sentiment === 'Positive' ? 'badge-pos' : (r.sentiment === 'Negative' ? 'badge-neg' : 'badge-neu');
+                let painBadge = r.pain_point_flag ? '<span class="badge badge-high">Có khiếu nại</span>' : '<span class="badge badge-low">Bình thường</span>';
+                let catBadge = r.category && r.category !== 'None' ? `<span class="badge badge-cat">${r.category}</span>` : '-';
+
+                tr.innerHTML = `
+                    <td><strong>#${r.id}</strong></td>
+                    <td><span class="badge ${sentBadge}">${r.sentiment}</span></td>
+                    <td>${painBadge}</td>
+                    <td>${catBadge}</td>
+                    <td style="max-width: 380px;">${r.review_text}</td>
+                    <td style="color: #cbd5e1; font-style: italic;">${r.summary || '-'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Update Pagination Info
+        const total = filteredReviews.length;
+        const totalPages = Math.ceil(total / pageSize) || 1;
+        document.getElementById('pageInfo').textContent = `Hiển thị ${total > 0 ? start + 1 : 0} - ${Math.min(end, total)} trên tổng số ${total} đánh giá`;
+        document.getElementById('prevBtn').disabled = currentPage === 1;
+        document.getElementById('nextBtn').disabled = currentPage >= totalPages;
+    }
+
+    function changePage(delta) {
+        currentPage += delta;
+        renderReviewsTable();
+    }
+</script>
+
+</body>
+</html>

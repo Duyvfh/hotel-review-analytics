@@ -1,0 +1,164 @@
+{
+  "hotel_name": "Boutique Hotel Service Analysis",
+  "total_reviews_analyzed": 235,
+  "overall_sentiment_breakdown": {
+    "Positive": 159,
+    "Neutral": 24,
+    "Negative": 52
+  },
+  "total_pain_points": 68,
+  "executive_summary": "Báo cáo phân tích 235 đánh giá từ khách hàng cho thấy có 68 phản hồi mang tính khiếu nại/góp ý. Đối với định vị Khách sạn Boutique, vấn đề ảnh hưởng trực tiếp đến uy tín thương hiệu tập trung ở các nhóm: Room_Amenities, Staff_Service, Pricing_and_Fees. Ban quản lý cần ưu tiên xử lý ngay các khiếu nại về minh bạch chi phí dịch vụ và quy trình vệ sinh phòng ở trong SLA 1-3 ngày.",
+  "category_insights": [
+    {
+      "category": "Room_Amenities",
+      "complaint_count": 14,
+      "percentage": 20.6,
+      "key_issues": [
+        "Phòng cũ kỹ, không giống hình ảnh quảng cáo.",
+        "Vị trí tốt và sạch sẽ nhưng thiếu các tiện ích như nhà hàng, quán cà phê.",
+        "Tòa nhà đã quá cũ.",
+        "Giá hợp lý nhưng dịch vụ giặt ủi không đúng như quảng cáo.",
+        "Great room and service, but the TV lacks smart features like YouTube or Netflix."
+      ],
+      "root_cause": "Thiết bị hạ tầng (điều hòa, nước nóng, wifi) xuống cấp chưa bảo trì kịp thời."
+    },
+    {
+      "category": "Staff_Service",
+      "complaint_count": 11,
+      "percentage": 16.2,
+      "key_issues": [
+        "Thiếu lễ tân phục vụ khách.",
+        "Nhân viên lễ tân làm lộ thông tin cá nhân của khách hàng.",
+        "Inconsistent service quality; staff lost items during the second stay.",
+        "Không thể liên lạc với khách sạn khi đến nhận phòng.",
+        "Staff failed to honor a promise regarding shower access, and the room was unclean with mold in the bathroom."
+      ],
+      "root_cause": "Quy trình chăm sóc chưa ấm cúng & thiếu giải quyết linh hoạt khi sự cố xảy ra."
+    },
+    {
+      "category": "Pricing_and_Fees",
+      "complaint_count": 10,
+      "percentage": 14.7,
+      "key_issues": [
+        "Phí gửi xe quá cao và quy định đỗ xe gây bất tiện cho shipper.",
+        "Customer was overcharged for parking compared to the listed price without clear explanation.",
+        "Lack of transparency regarding mandatory security deposit fees.",
+        "Giá cao so với chất lượng, cơ sở vật chất nguy hiểm.",
+        "Great location with many dining options, but drinks are expensive."
+      ],
+      "root_cause": "Thiếu minh bạch trong phụ phí điện/nước và thủ tục hóa đơn tài chính."
+    },
+    {
+      "category": "Cleanliness",
+      "complaint_count": 9,
+      "percentage": 13.2,
+      "key_issues": [
+        "Phòng cũ và rất bẩn, không đáng tiền.",
+        "Vị trí tốt và sạch sẽ nhưng nội thất không được dọn dẹp trong suốt thời gian lưu trú.",
+        "The room cleaning was not thorough.",
+        "Bathroom was full of mold on the ceiling and around the sink and shower.",
+        "Messy room, dirty bathroom, unfriendly service, and lack of parking."
+      ],
+      "root_cause": "Quy trình kiểm tra dọn phòng chưa nghiêm ngặt, ảnh hưởng tiêu chuẩn Boutique."
+    },
+    {
+      "category": "Others",
+      "complaint_count": 9,
+      "percentage": 13.2,
+      "key_issues": [
+        "Khách hàng không hài lòng về việc sử dụng hình ảnh cá nhân.",
+        "Phòng thực tế không giống quảng cáo, điều kiện tồi tệ.",
+        "Đánh giá thấp.",
+        "The place feels geared towards long-term guests; cleanliness could be improved, but the pets are a highlight.",
+        "Presence of many cats in the lobby may cause issues for guests with allergies."
+      ],
+      "root_cause": "Quy trình đặt phòng và xuất hóa đơn giao dịch gặp trục trặc."
+    },
+    {
+      "category": "Location_and_Access",
+      "complaint_count": 8,
+      "percentage": 11.8,
+      "key_issues": [
+        "Vị trí khó tiếp cận cho người đi bộ, cần phương tiện di chuyển.",
+        "Tiện nghi ổn nhưng vị trí xa các trung tâm thương mại.",
+        "Clean and spacious rooms with good views, but slightly far from the city center.",
+        "Good value for money and modern design, but location is not central.",
+        "Good service but poor location with safety concerns."
+      ],
+      "root_cause": "Hướng dẫn vị trí và đường đi/chỗ đỗ xe chưa chi tiết cho khách."
+    },
+    {
+      "category": "F_and_B",
+      "complaint_count": 3,
+      "percentage": 4.4,
+      "key_issues": [
+        "Good taste and service, but the portion sizes are too small for the price.",
+        "Staff were pleasant, but the breakfast service was disappointing due to insufficient orange juice.",
+        "Room conditions need improvement and the breakfast was very disappointing and simple."
+      ],
+      "root_cause": "Chất lượng dịch vụ ăn uống/bữa sáng chưa đa dạng."
+    },
+    {
+      "category": "Boutique_Experience",
+      "complaint_count": 2,
+      "percentage": 2.9,
+      "key_issues": [
+        "Complaints about discriminatory treatment and lack of respect towards male guests.",
+        "Misleading advertising regarding star rating and poor facility quality."
+      ],
+      "root_cause": "Thiết kế không gian hoặc trải nghiệm phòng ở chưa đúng kỳ vọng quảng cáo."
+    },
+    {
+      "category": "Noise_and_Quietness",
+      "complaint_count": 2,
+      "percentage": 2.9,
+      "key_issues": [
+        "Severe construction noise starting early in the morning.",
+        "The room was small for the price, breakfast was limited, and poor soundproofing caused sleep disturbance."
+      ],
+      "root_cause": "Độ cách âm chưa đạt chuẩn làm mất đi sự riêng tư yên tĩnh của khách sạn boutique."
+    }
+  ],
+  "action_items": [
+    {
+      "priority": "High",
+      "priority_rationale": "Trực tiếp gây tranh chấp pháp lý/tài chính và tạo bài đánh giá 1 sao (phạt điện nước 5k/số, không xuất hóa đơn). Lỗi Deal-breaker với khách sạn.",
+      "department": "Ban Quản Lý & Kế Toán",
+      "issue": "Thu phụ phí điện/nước bất hợp lý, thiếu minh bạch hóa đơn thanh toán",
+      "action_plan": "Ban hành ngay bảng giá niêm yết chuẩn; rà soát lại hợp đồng thuê; đào tạo nhân viên cung cấp hóa đơn/biên nhận rõ ràng cho khách.",
+      "timeline": "Ngay lập tức (24h - 3 ngày)"
+    },
+    {
+      "priority": "High",
+      "priority_rationale": "Sạch sẽ là yêu cầu tối quan trọng của mô hình Boutique Hotel. Phòng dơ hoặc có mùi sẽ ngay lập tức làm mất hình ảnh thương hiệu cao cấp.",
+      "department": "Bộ Phận Buồng Phòng (Housekeeping)",
+      "issue": "Vệ sinh phòng, phòng tắm hoặc mùi hôi chưa đạt tiêu chuẩn boutique",
+      "action_plan": "Thiết lập quy trình kiểm tra vệ sinh 2 lớp (Nhân viên dọn + Trưởng nhóm duyệt) trước khi giao phòng. Đặt tinh dầu/khử mùi tự nhiên.",
+      "timeline": "Trong vòng 3 ngày"
+    },
+    {
+      "priority": "Medium",
+      "priority_rationale": "Hạ tầng chập chờn (máy lạnh yếu, wifi chậm) giảm điểm rating từ 5* xuống 3-4*. Cần bảo trì nhưng có thể thu xếp trong 1-2 tuần.",
+      "department": "Bộ Phận Bảo Trì (Maintenance)",
+      "issue": "Trang thiết bị phòng ở (máy lạnh, nước nóng, wifi) hoạt động không ổn định",
+      "action_plan": "Kiểm tra tổng thể toàn bộ hệ thống điện lạnh và internet; thay thế các thiết bị cũ hỏng.",
+      "timeline": "1 - 2 tuần"
+    },
+    {
+      "priority": "Medium",
+      "priority_rationale": "Boutique Hotel sống bằng sự tận tụy và ấm cúng của nhân viên. Thái độ thiếu linh hoạt cần được khắc phục qua đào tạo nội bộ.",
+      "department": "Bộ Phận Lễ Tân & Nhân Sự",
+      "issue": "Thái độ giao tiếp chưa ấm cúng, xử lý sự cố chưa linh hoạt chuẩn boutique",
+      "action_plan": "Đào tạo chuẩn phong cách dịch vụ Boutique (Personalized Service); ban hành quy trình đền bù sự cố nhanh (khách không phải chờ đợi).",
+      "timeline": "1 - 2 tuần"
+    },
+    {
+      "priority": "Low",
+      "priority_rationale": "Ảnh hưởng đến trải nghiệm riêng tư nhưng phụ thuộc vào kết cấu hạ tầng, cần thời gian thi công bổ sung vật liệu cách âm.",
+      "department": "Bộ Phận Bảo Trì & Thi Công",
+      "issue": "Tiếng ồn đêm khuya và độ cách âm giữa các phòng chưa hoàn hảo",
+      "action_plan": "Lắp ron cao su cách âm chân cửa; nhắc nhở khách giữ yên tĩnh sau 22h; trang bị nút tai cách âm tặng khách.",
+      "timeline": "2 - 4 tuần"
+    }
+  ]
+}
