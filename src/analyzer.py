@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import io
 import json
 import logging
@@ -42,9 +43,25 @@ OUTPUT_FILE = OUTPUT_DIR / "analyzed_reviews.csv"
 REPORT_MD_FILE = OUTPUT_DIR / "hotel_improvement_report.md"
 REPORT_JSON_FILE = OUTPUT_DIR / "hotel_improvement_report.json"
 DASHBOARD_HTML_FILE = OUTPUT_DIR / "index.html"
+CACHE_FILE = OUTPUT_DIR / ".analyzer_cache.json"
+
 DEFAULT_BACKEND = "gemini"
 DEFAULT_MODEL = "gemini-3.1-flash-lite"
-API_DELAY_SECONDS = 3.0
+API_DELAY_SECONDS = 13.0  # Safe delay to stay under 5 RPM limit
+
+CATEGORY_TRANSLATIONS = {
+    "Room_Amenities": "Tiện Nghi Phòng Ở",
+    "Location_and_Access": "Vị Trí & Di Chuyển",
+    "Cleanliness": "Vệ Sinh Phòng Ở",
+    "Staff_Service": "Dịch Vụ & Thái Độ Nhân Viên",
+    "Pricing_and_Fees": "Chi Phí & Phụ Phí Minh Bạch",
+    "Noise_and_Quietness": "Độ Cách Âm & Yên Tĩnh",
+    "Boutique_Experience": "Trải Nghiệm Không Gian Boutique",
+    "F_and_B": "Ẩm Thực & Bữa Sáng (F&B)",
+    "Others": "Vận Hành & Giao Dịch Khác",
+    "None": "Không Có Phàn Nàn",
+    "Unknown": "Chưa Phân Loại",
+}
 
 SYSTEM_PROMPT = (
     "You analyze hotel reviews for a boutique hotel. Respond with ONLY a valid JSON object. "
@@ -60,6 +77,30 @@ USER_PROMPT_TEMPLATE = """Analyze this review for a boutique hotel and return JS
 Review:
 {review_text}
 """
+
+
+def load_cache() -> Dict[str, Dict[str, Any]]:
+    """Load cached analysis results to save Gemini API quota."""
+    if CACHE_FILE.exists():
+        try:
+            return json.loads(CACHE_FILE.read_text(encoding="utf-8"))
+        except Exception as exc:
+            logger.warning("Không thể đọc cache file %s: %s. Khởi tạo cache mới.", CACHE_FILE, exc)
+            return {}
+    return {}
+
+
+def save_cache(cache: Dict[str, Dict[str, Any]]) -> None:
+    """Save persistent disk cache."""
+    try:
+        CACHE_FILE.write_text(json.dumps(cache, ensure_ascii=False, indent=2), encoding="utf-8")
+    except Exception as exc:
+        logger.warning("Không thể ghi file cache %s: %s", CACHE_FILE, exc)
+
+
+def get_text_hash(text: str) -> str:
+    """SHA-256 hash for text deduplication and caching."""
+    return hashlib.sha256(text.strip().encode("utf-8")).hexdigest()
 
 
 def validate_backend_credentials(backend: str) -> None:
@@ -86,16 +127,13 @@ def validate_backend_credentials(backend: str) -> None:
         if not api_key:
             raise RuntimeError(
                 "[Backend: openai] Thiếu OPENAI_API_KEY trong biến môi trường. "
-                "Vui lòng cấu hình OPENAI_API_KEY trước khi chạy. "
-                "Ví dụ (PowerShell): $env:OPENAI_API_KEY=\"sk-...\""
+                "Vui lòng cấu hình OPENAI_API_KEY trước khi chạy."
             )
         try:
             import openai  # type: ignore
         except (ModuleNotFoundError, ImportError) as exc:
             raise RuntimeError(
-                "[Backend: openai] Thư viện openai chưa được cài đặt hoặc chưa active môi trường venv. "
-                "Vui lòng chạy bằng python trong venv (.\\venv\\Scripts\\python.exe analyzer.py) "
-                "hoặc cài đặt thư viện bằng: pip install openai"
+                "[Backend: openai] Thư viện openai chưa được cài đặt."
             ) from exc
 
     elif backend == "ollama":
@@ -103,9 +141,7 @@ def validate_backend_credentials(backend: str) -> None:
             import ollama  # type: ignore
         except (ModuleNotFoundError, ImportError) as exc:
             raise RuntimeError(
-                "[Backend: ollama] Thư viện ollama chưa được cài đặt hoặc chưa active môi trường venv. "
-                "Vui lòng chạy bằng python trong venv (.\\venv\\Scripts\\python.exe analyzer.py) "
-                "hoặc cài đặt thư viện bằng: pip install ollama"
+                "[Backend: ollama] Thư viện ollama chưa được cài đặt."
             ) from exc
 
     else:
@@ -170,7 +206,7 @@ def extract_gemini_text(response: Any) -> str:
 
 
 def analyze_review(review_text: str, model: str, backend: str, retry: bool = True) -> Dict[str, Any]:
-    target_model = model or ("gemini-3.6-flash" if backend == "gemini" else "gpt-4o-mini" if backend == "openai" else "llama3.2")
+    target_model = model or ("gemini-3.1-flash-lite" if backend == "gemini" else "gpt-4o-mini" if backend == "openai" else "llama3.2")
     if backend == "ollama":
         try:
             import ollama  # type: ignore
@@ -220,14 +256,6 @@ def analyze_review(review_text: str, model: str, backend: str, retry: bool = Tru
                 content = response["choices"][0]["message"]["content"]
             result = parse_llm_response(content)
             return result.model_dump()
-        except (json.JSONDecodeError, ValidationError, KeyError, TypeError) as exc:
-            if retry:
-                logger.warning("[Backend: openai | Model: %s] Thử lại sau lỗi parse JSON response: %s", target_model, exc)
-                time.sleep(API_DELAY_SECONDS)
-                return analyze_review(review_text, target_model, backend, retry=False)
-            err_msg = f"[Backend: openai | Model: {target_model}] Lỗi parse dữ liệu JSON từ LLM: {type(exc).__name__}: {exc}"
-            logger.error(err_msg)
-            raise RuntimeError(err_msg) from exc
         except Exception as exc:
             err_msg = f"[Backend: openai | Model: {target_model}] Lỗi khi gọi OpenAI API: {type(exc).__name__}: {exc}"
             logger.error(err_msg)
@@ -240,7 +268,7 @@ def analyze_review(review_text: str, model: str, backend: str, retry: bool = Tru
             logger.error(err_msg)
             raise RuntimeError(err_msg)
         
-        fallback_models = [target_model, "gemini-flash-latest", "gemini-3.1-flash-lite"]
+        fallback_models = [target_model, "gemini-3.1-flash-lite", "gemini-flash-latest"]
         candidate_models = list(dict.fromkeys(fallback_models))
         
         try:
@@ -276,9 +304,9 @@ def analyze_review(review_text: str, model: str, backend: str, retry: bool = Tru
                         last_exception = exc
                         exc_str = str(exc)
                         if "503" in exc_str or "UNAVAILABLE" in exc_str or "429" in exc_str or "RESOURCE_EXHAUSTED" in exc_str:
-                            wait_time = attempt * 3
+                            wait_time = attempt * 15
                             logger.warning(
-                                "[Backend: gemini | Model: %s] Máy chủ Google bận/quá tải tạm thời (503/429). Tự động chờ %d giây và thử lại (lượt %d/3)...",
+                                "[Backend: gemini | Model: %s] Quá giới hạn API (429/RESOURCE_EXHAUSTED). Đang chờ %d giây thử lại (lượt %d/3)...",
                                 current_model, wait_time, attempt
                             )
                             time.sleep(wait_time)
@@ -295,7 +323,7 @@ def analyze_review(review_text: str, model: str, backend: str, retry: bool = Tru
             logger.error(err_msg)
             raise RuntimeError(err_msg) from exc
 
-    err_msg = f"Backend không được hỗ trợ: '{backend}'. Các backend hợp lệ: ['gemini', 'openai', 'ollama']."
+    err_msg = f"Backend không được hỗ trợ: '{backend}'."
     logger.error(err_msg)
     raise ValueError(err_msg)
 
@@ -311,7 +339,7 @@ def analyze_batch(batch_items: List[Dict[str, Any]], model: str, backend: str) -
         if not api_key:
             raise RuntimeError("[Backend: gemini] API Key bị trống (GOOGLE_API_KEY is not set).")
 
-        fallback_models = [target_model, "gemini-3.6-flash", "gemini-flash-latest"]
+        fallback_models = [target_model, "gemini-3.1-flash-lite", "gemini-flash-latest"]
         candidate_models = list(dict.fromkeys(fallback_models))
 
         from google import genai as google_genai  # type: ignore
@@ -354,9 +382,9 @@ def analyze_batch(batch_items: List[Dict[str, Any]], model: str, backend: str) -
                     last_exception = exc
                     exc_str = str(exc)
                     if "503" in exc_str or "UNAVAILABLE" in exc_str or "429" in exc_str or "RESOURCE_EXHAUSTED" in exc_str:
-                        wait_time = attempt * 3
+                        wait_time = attempt * 15
                         logger.warning(
-                            "[Backend: gemini | Model: %s] Máy chủ Google bận (503/429). Tự động chờ %ds thử lại batch (lượt %d/3)...",
+                            "[Backend: gemini | Model: %s] Đạt giới hạn gọi API (429/RESOURCE_EXHAUSTED). Tạm dừng %ds thử lại batch (lượt %d/3)...",
                             current_model, wait_time, attempt
                         )
                         time.sleep(wait_time)
@@ -412,7 +440,6 @@ def load_reviews(path: Path = REVIEW_FILE) -> pd.DataFrame:
         df = pd.read_csv(io.StringIO(clean_text), on_bad_lines="skip")
         df.columns = df.columns.str.strip().str.replace("\ufeff", "").str.replace("ï»¿", "")
         
-        # Apply automatic Unicode NFC normalization across all text columns
         for col in df.columns:
             if df[col].dtype == "object" or str(df[col].dtype).startswith("string"):
                 df[col] = df[col].astype(str).apply(lambda s: unicodedata.normalize("NFC", s))
@@ -425,23 +452,9 @@ def load_reviews(path: Path = REVIEW_FILE) -> pd.DataFrame:
 
 def find_review_text_column(df: pd.DataFrame) -> str:
     possible_names = [
-        "review_text",
-        "Review",
-        "review",
-        "review_texts",
-        "content",
-        "text",
-        "danh_gia",
-        "đánh giá",
-        "Đánh giá",
-        "noi_dung",
-        "nội dung",
-        "Nội dung",
-        "comment",
-        "Comment",
-        "phan_hoi",
-        "phản hồi",
-        "Phản hồi",
+        "review_text", "Review", "review", "review_texts", "content", "text",
+        "danh_gia", "đánh giá", "Đánh giá", "noi_dung", "nội dung", "Nội dung",
+        "comment", "Comment", "phan_hoi", "phản hồi", "Phản hồi"
     ]
     for name in possible_names:
         if name in df.columns:
@@ -449,9 +462,7 @@ def find_review_text_column(df: pd.DataFrame) -> str:
         for col in df.columns:
             if col.strip().lower() == name.lower():
                 return col
-    raise ValueError(
-        f"Không tìm thấy cột chứa nội dung đánh giá trong CSV. Các cột hiện có: {list(df.columns)}"
-    )
+    raise ValueError(f"Không tìm thấy cột chứa nội dung đánh giá trong CSV. Các cột hiện có: {list(df.columns)}")
 
 
 class HotelReviewAgent:
@@ -470,7 +481,7 @@ class HotelReviewAgent:
     def analyze_single_review(self, review_text: str) -> Dict[str, Any]:
         return analyze_review(review_text, model=self.model, backend=self.backend)
 
-    def analyze_dataframe(self, df: pd.DataFrame, limit: Optional[int] = None, batch_size: int = 10) -> pd.DataFrame:
+    def analyze_dataframe(self, df: pd.DataFrame, limit: Optional[int] = None, batch_size: int = 25) -> pd.DataFrame:
         review_col = find_review_text_column(df)
         df_work = df.head(limit).copy() if limit else df.copy()
 
@@ -478,51 +489,69 @@ class HotelReviewAgent:
             if col not in df_work.columns:
                 df_work[col] = None
 
-        valid_rows = []
+        cache = load_cache()
+        cached_count = 0
+        uncached_rows = []
+
         for index, row in df_work.iterrows():
             text = str(row.get(review_col, "")).strip()
             if text and text.lower() not in ["nan", "none", "null"]:
-                valid_rows.append((index, text))
+                text_hash = get_text_hash(text)
+                if text_hash in cache:
+                    cached_data = cache[text_hash]
+                    for col in ANALYSIS_COLUMNS:
+                        df_work.at[index, col] = cached_data.get(col)
+                    cached_count += 1
+                else:
+                    uncached_rows.append((index, text))
 
-        total = len(valid_rows)
+        total_uncached = len(uncached_rows)
         logger.info(
-            "AI Agent starting batch analysis of %d reviews using backend '%s' (model: %s, batch size: %d)",
-            total, self.backend, self.model, batch_size
+            "AI Agent Status: %d đánh giá load từ Disk Cache (0 API request). %d đánh giá mới cần phân tích (batch_size: %d, delay: %.1fs).",
+            cached_count, total_uncached, batch_size, API_DELAY_SECONDS
         )
 
-        for i in range(0, total, batch_size):
-            chunk = valid_rows[i : i + batch_size]
+        if total_uncached == 0:
+            logger.info("Tất cả %d đánh giá đều đã sẵn sàng từ Cache! Không tốn quota API nào.", cached_count)
+            return df_work
+
+        for i in range(0, total_uncached, batch_size):
+            chunk = uncached_rows[i : i + batch_size]
             batch_payload = [{"review_index": idx, "text": txt} for idx, txt in chunk]
             
             logger.info(
-                "Processing batch %d/%d (reviews %d to %d)...",
+                "Processing batch %d/%d (%d reviews)...",
                 (i // batch_size) + 1,
-                (total + batch_size - 1) // batch_size,
-                i + 1,
-                min(i + batch_size, total)
+                (total_uncached + batch_size - 1) // batch_size,
+                len(chunk)
             )
 
             try:
                 batch_results = analyze_batch(batch_payload, model=self.model, backend=self.backend)
                 results_by_idx = {res["review_index"]: res for res in batch_results if "review_index" in res}
                 
-                for idx, _ in chunk:
+                for idx, txt in chunk:
                     if idx in results_by_idx:
                         res = results_by_idx[idx]
                         for col in ANALYSIS_COLUMNS:
                             df_work.at[idx, col] = res.get(col)
+                        cache[get_text_hash(txt)] = {col: res.get(col) for col in ANALYSIS_COLUMNS}
                     else:
                         res = self.analyze_single_review(str(df_work.at[idx, review_col]))
                         for col in ANALYSIS_COLUMNS:
                             df_work.at[idx, col] = res.get(col)
+                        cache[get_text_hash(txt)] = {col: res.get(col) for col in ANALYSIS_COLUMNS}
             except Exception as exc:
                 logger.warning("Batch execution failed, falling back to single review mode for this batch: %s", exc)
                 for idx, txt in chunk:
                     res = self.analyze_single_review(txt)
                     for col in ANALYSIS_COLUMNS:
                         df_work.at[idx, col] = res.get(col)
+                    cache[get_text_hash(txt)] = {col: res.get(col) for col in ANALYSIS_COLUMNS}
 
-            time.sleep(API_DELAY_SECONDS)
+            save_cache(cache)
+            if i + batch_size < total_uncached:
+                time.sleep(API_DELAY_SECONDS)
 
         return df_work
 
@@ -570,14 +599,13 @@ class HotelReviewAgent:
                 )
                 category_insights.append(insight)
 
-        # Build structured Action Items with clear Rationale and SLA Timelines
         action_items: list[ActionItem] = []
         cat_map = {ci.category: ci for ci in category_insights}
 
         if "Pricing_and_Fees" in cat_map or "Others" in cat_map:
             action_items.append(ActionItem(
                 priority="High",
-                priority_rationale="Trực tiếp gây tranh chấp pháp lý/tài chính và tạo bài đánh giá 1 sao (phạt điện nước 5k/số, không xuất hóa đơn). Lỗi Deal-breaker với khách sạn.",
+                priority_rationale="Trực tiếp gây tranh chấp pháp lý/tài chính và tạo bài đánh giá 1 sao. Lỗi Deal-breaker với khách sạn.",
                 department="Ban Quản Lý & Kế Toán",
                 issue="Thu phụ phí điện/nước bất hợp lý, thiếu minh bạch hóa đơn thanh toán",
                 action_plan="Ban hành ngay bảng giá niêm yết chuẩn; rà soát lại hợp đồng thuê; đào tạo nhân viên cung cấp hóa đơn/biên nhận rõ ràng cho khách.",
@@ -610,7 +638,7 @@ class HotelReviewAgent:
                 priority_rationale="Boutique Hotel sống bằng sự tận tụy và ấm cúng của nhân viên. Thái độ thiếu linh hoạt cần được khắc phục qua đào tạo nội bộ.",
                 department="Bộ Phận Lễ Tân & Nhân Sự",
                 issue="Thái độ giao tiếp chưa ấm cúng, xử lý sự cố chưa linh hoạt chuẩn boutique",
-                action_plan="Đào tạo chuẩn phong cách dịch vụ Boutique (Personalized Service); ban hành quy trình đền bù sự cố nhanh (khách không phải chờ đợi).",
+                action_plan="Đào tạo chuẩn phong cách dịch vụ Boutique (Personalized Service); ban hành quy trình đền bù sự cố nhanh.",
                 timeline="1 - 2 tuần"
             ))
 
@@ -634,9 +662,10 @@ class HotelReviewAgent:
                 timeline="Hàng tháng"
             ))
 
+        top_cats_vi = [CATEGORY_TRANSLATIONS.get(ci.category, ci.category) for ci in category_insights[:3]]
         exec_summary = (
             f"Báo cáo phân tích {total_reviews} đánh giá từ khách hàng cho thấy có {total_pain_points} phản hồi mang tính khiếu nại/góp ý. "
-            f"Đối với định vị Khách sạn Boutique, vấn đề ảnh hưởng trực tiếp đến uy tín thương hiệu tập trung ở các nhóm: {', '.join([ci.category for ci in category_insights[:3]]) if category_insights else 'Chưa ghi nhận'}. "
+            f"Đối với định vị Khách sạn Boutique, vấn đề ảnh hưởng trực tiếp đến uy tín thương hiệu tập trung ở các nhóm: {', '.join(top_cats_vi) if top_cats_vi else 'Chưa ghi nhận'}. "
             "Ban quản lý cần ưu tiên xử lý ngay các khiếu nại về minh bạch chi phí dịch vụ và quy trình vệ sinh phòng ở trong SLA 1-3 ngày."
         )
 
@@ -676,7 +705,8 @@ class HotelReviewAgent:
         md_content.append("## 3. 🔍 Phân Tích Chi Tiết Theo Phân Loại Dịch Vụ Boutique (Category Insights)")
         if report.category_insights:
             for ci in report.category_insights:
-                md_content.append(f"### 🎯 Nhóm: {ci.category}")
+                cat_vi = CATEGORY_TRANSLATIONS.get(ci.category, ci.category)
+                md_content.append(f"### 🎯 Nhóm: {cat_vi} (`{ci.category}`)")
                 md_content.append(f"- **Số lượng khiếu nại:** {ci.complaint_count} ({ci.percentage}% tổng khiếu nại)")
                 md_content.append(f"- **Nguyên nhân cốt lõi:** {ci.root_cause}")
                 md_content.append("- **Các phản hồi tiêu biểu từ khách hàng:**")
@@ -687,11 +717,6 @@ class HotelReviewAgent:
             md_content.append("Chưa phát hiện nhóm khiếu nại tập trung.\n")
 
         md_content.append("## 4. 🛠️ Kế Hoạch Hành Động Cải Thiện Dịch Vụ (Action Plan & Prioritization)")
-        md_content.append("### 💡 Tiêu chí Phân cấp Ưu tiên & Khung Thời gian SLA:")
-        md_content.append("- 🔴 **High (Cao - SLA 24h đến 3 ngày)**: Lỗi trực tiếp gây tranh chấp tài chính/pháp lý, vi phạm vệ sinh nghiêm trọng hoặc hỏng hóc thiết bị chính. Đây là lỗi 'Deal-breaker' phẫn nộ làm mất khách lập tức.")
-        md_content.append("- 🟡 **Medium (Trung bình - SLA 1 đến 2 tuần)**: Lỗi ảnh hưởng đến trải nghiệm nghỉ ngơi chuẩn boutique (wifi, máy lạnh yếu, thái độ phục vụ chưa ấm cúng), kéo điểm rating từ 5* xuống 3-4*.")
-        md_content.append("- 🟢 **Low (Thấp - SLA 2 đến 4 tuần)**: Yêu cầu nâng cấp thêm không gian, decor, tiện ích bổ sung (Nice-to-have).\n")
-
         md_content.append("| Mức Ưu Tiên | Bộ Phận | Vấn Đề | Lý Do Phân Loại | Giải Pháp Đề Xuất | Khung Thời Gian (SLA) |")
         md_content.append("| :--- | :--- | :--- | :--- | :--- | :--- |")
         for item in report.action_items:
@@ -706,7 +731,7 @@ def run_analyzer(
     backend: str = DEFAULT_BACKEND,
     model: Optional[str] = None,
     limit: Optional[int] = None,
-    batch_size: int = 10,
+    batch_size: int = 25,
     generate_report: bool = True,
 ) -> None:
     agent = HotelReviewAgent(backend=backend, model=model)
@@ -738,24 +763,24 @@ def main() -> None:
         "--backend",
         default=DEFAULT_BACKEND,
         choices=["gemini", "openai", "ollama"],
-        help="Backend to use for LLM analysis. Default is 'gemini' (requires GOOGLE_API_KEY).",
+        help="Backend to use for LLM analysis.",
     )
     parser.add_argument(
         "--model",
         default=None,
-        help="Model name to use (e.g. gemini-3.1-flash-lite, llama3.2, gpt-4o-mini).",
+        help="Model name to use.",
     )
     parser.add_argument(
         "--limit",
         type=int,
         default=None,
-        help="Analyze only the first N reviews (useful for quick testing).",
+        help="Analyze only the first N reviews.",
     )
     parser.add_argument(
         "--batch-size",
         type=int,
-        default=10,
-        help="Number of reviews to process in a single API call (default: 10).",
+        default=25,
+        help="Number of reviews to process in a single API call (default: 25).",
     )
     parser.add_argument(
         "--no-report",

@@ -32,3 +32,21 @@ Thumbs.db
 # Temporary / Scratch files
 tmp_*
 scratch/
+
+# AI Agent configuration (not project code)
+.agents/
+
+# Cache files
+output/.analyzer_cache.json
+*.cache
+*.cache.json
+
+# Private keys & certificates
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# Raw data exports (may contain PII)
+raw_reviews.csv
